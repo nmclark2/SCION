@@ -62,7 +62,7 @@ SCION <- function(target_genes_file,reg_genes_file,target_data_file,reg_data_fil
     network = RS.Get.Weight.Matrix(t(clustertargetdata),t(clusterregdata))
     
     #trim matrix based on the ratio of TFs to targets - more TFs per target = more edges kept
-    TFratio = (dim(clusterregdata)[1])/(dim(clustertargetdata)[1]+dim(clusterregdata)[1])
+    TFratio = (dim(clusterregdata)[1])/(dim(clustertargetdata)[1]-dim(clusterregdata)[1])
     if (TFratio < 0.25){
       edgestokeep = floor(0.5*dim(clustertargetdata)[1])
     } else if (TFratio >= 0.25 & TFratio < 0.5){
