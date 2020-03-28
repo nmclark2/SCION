@@ -1,8 +1,3 @@
-library(shiny)
-setwd("D:/OneDrive/Documents/Walley Lab Postdoc/SCION")
-source("SCION.R")
-source('dtw_clustering.R')
-source('RS.Get.Weight.Matrix.R')
 
 # Define UI ----
 ui <- fluidPage(
