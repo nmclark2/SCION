@@ -18,7 +18,7 @@ ui <- fluidPage(
               strong("NOTE: Currently SCION only takes comma separated values (.csv) files as input."),
               p(),
               strong("Working directory"),
-              p("Name of your working directory which MUST contain your metadata and MaxQuant output files."),
+              p("Name of your working directory which MUST contain your files."),
               strong("Target Matrix"),
               p("Data matrix to use for your gene targets (e.g. transcript data). 
                 Columns are samples, rows are genes."),
