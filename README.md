@@ -1,5 +1,5 @@
-# SCION
-Spatiotemporal Clustering for Integrative Omics Networks (SCION)
+# SC-ION
+Spatiotemporal Clustering and Inference of Omics Networks (SC-ION)
 
 
 # To run
