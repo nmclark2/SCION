@@ -1,12 +1,37 @@
 # SC-ION
 Spatiotemporal Clustering and Inference of Omics Networks (SC-ION)
 
-
 # To run
 Download all R files to your computer. Run all code in the START_SCION.R file. Make sure to change the working directory to the one that contains SCION. Follow the instructions in the RShiny App to run your data.
 
+# Known issues
+
+- This method will automatically write over files with the same name in your working directory. If you would like to compare your results, make sure to move them from your working directory or change your directory to prevent them being written over.
+
+- If you have previously used packages that load rlang (such as tidyverse), you may receive an error when trying to install some packages (such as dtwclust) that you need to update rlang, but it cannot be done. To fix this, you need to delete the rlang folder from your R folder, and then reinstall.
+
 # Test data
-Test data are provided in the TEST.zip folder. Download and unzip the files, then run using the default SCION settings. You should obtain the results already in the TEST.zip folder.
+Test data are provided in the TEST.zip folder. Download and unzip the files, then run using the following settings:
+
+- Working directory: wherever your test files are (you can copy and paste the path from Windows/Mac file explorer)
+
+- Target matrix: target_mat_test.csv
+
+- Regulator matrix: reg_mat_test.csv
+
+- Target list: target_list_test.csv
+
+- Regulator list: reg_list_test.csv
+
+- Clustering: You can use either Temporal or Non-Temporal and compare the results.
+
+- Clustering matrix: cluster_test.csv
+
+- Clustering threshold: If using temporal clustering, use 0.5. If using non-temporal clustering, use 0.25. 
+
+- Clusters file: Leave empty
+
+- Hub connection: No
 
 # Version History
 
