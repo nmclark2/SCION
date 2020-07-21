@@ -47,6 +47,8 @@ Test data are provided in the TEST.zip folder. Download and unzip the files, the
 
 - Adds option to not connect hubs 
 
+- Adds RS.Get.Weight.Matrix_cluster which can be used to run GENIE3 in parallel. This is not implemented in the RShiny app. If you would like to use this version, simply replace all instances of RS.Get.Weight.Matrix with RS.Get.Weight.Matrix_cluster throughout SCION.
+
 # Version 1.1 - March 27, 2020
 
 - Fixes edge trimming formula
