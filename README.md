@@ -35,6 +35,18 @@ Test data are provided in the TEST.zip folder. Download and unzip the files, the
 
 # Version History
 
+# Version 2.0 beta - July 21, 2020
+
+- Adds another clustering algorithm (ICA) more suitable for non-temporal data
+
+- Adds options for Temporal or Non-temporal clustering 
+
+- Adds option to upload cluster file 
+
+- Adds option to not cluster 
+
+- Adds option to not connect hubs 
+
 # Version 1.1 - March 27, 2020
 
 - Fixes edge trimming formula
