@@ -4,16 +4,6 @@
 SCION <- function(target_genes_file,reg_genes_file,target_data_file,reg_data_file,
                   is_clustering,clustering_data_file,threshold,clusters_file,hubs,working_dir){
   
-  #check that all packages are installed, and load them
-  for (package in c('dtwclust', 'plotly','randomForest','fastICA','tidyverse')) {
-    if (!require(package, character.only=T, quietly=T)) {
-      install.packages(package)
-      library(package, character.only=T)
-    }else{
-      library(package,character.only=T)
-    }
-  }
-  
   #set working directory which contains all your input files
   setwd(working_dir)
 
