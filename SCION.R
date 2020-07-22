@@ -133,7 +133,6 @@ SCION <- function(target_genes_file,reg_genes_file,target_data_file,reg_data_fil
       }else{
         weightthreshold = allweights[edgestokeep]
       }
-      weightthreshold=0.2
       
       #now make a new network where we eliminate all the low confidence edges
       trimmednet = data.frame(ifelse(network<weightthreshold,NaN,network))
