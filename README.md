@@ -35,6 +35,10 @@ Test data are provided in the TEST.zip folder. Download and unzip the files, the
 
 # Version History
 
+# Version 2.0 full release - August 6, 2020
+
+- No changes from beta version
+
 # Version 2.0 beta - July 21, 2020
 
 - Adds another clustering algorithm (ICA) more suitable for non-temporal data
