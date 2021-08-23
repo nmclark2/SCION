@@ -1,7 +1,7 @@
 # SC-ION
 Spatiotemporal Clustering and Inference of Omics Networks (SC-ION)
 
-DOI: https://zenodo.org/badge/232898677.svg
+DOI: https://doi.org/10.5281/zenodo.5237310
 
 # To run
 Download all R files to your computer. Run all code in the START_SCION.R file. Make sure to change the working directory to the one that contains SCION. Follow the instructions in the RShiny App to run your data.
