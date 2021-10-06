@@ -1,7 +1,7 @@
 # SC-ION
 Spatiotemporal Clustering and Inference of Omics Networks (SC-ION)
 
-DOI: https://doi.org/10.5281/zenodo.5237310
+[![DOI](https://zenodo.org/badge/232898677.svg)](https://zenodo.org/badge/latestdoi/232898677)
 
 # To run
 Download all R files to your computer. Run all code in the START_SCION.R file. Make sure to change the working directory to the one that contains SCION. Follow the instructions in the RShiny App to run your data.
@@ -36,6 +36,10 @@ Test data are provided in the TEST.zip folder. Download and unzip the files, the
 - Hub connection: No
 
 # Version History
+
+# Version 2.1 - August 23, 2021
+
+- Same as version 2.0, but archived for publication in Nature Communications: https://doi.org/10.1038/s41467-021-26165
 
 # Version 2.0 full release - August 6, 2020
 
