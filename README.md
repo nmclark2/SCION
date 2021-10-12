@@ -39,7 +39,7 @@ Test data are provided in the TEST.zip folder. Download and unzip the files, the
 
 # Version 2.1 - August 23, 2021
 
-- Same as version 2.0, but archived for publication in Nature Communications: https://doi.org/10.1038/s41467-021-26165
+- Same as version 2.0, but archived for publication in Nature Communications: https://doi.org/10.1038/s41467-021-26165-3
 
 # Version 2.0 full release - August 6, 2020
 
