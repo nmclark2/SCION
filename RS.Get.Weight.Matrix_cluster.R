@@ -22,6 +22,9 @@ RS.Get.Weight.Matrix_cluster<- function(target.matrix, input.matrix, K="sqrt", n
   target.names <- colnames(target.matrix)
   input.names <- colnames(input.matrix)
   #print(input.names)
+  if (is.null(num.inputs) | is.null(num.targets)){
+    return(NULL)
+  }
   
   weight.matrix <- matrix(0.0, nrow=num.targets, ncol=num.inputs)
   rownames(weight.matrix) <- target.names

@@ -22,6 +22,10 @@ RS.Get.Weight.Matrix<- function(target.matrix, input.matrix, K="sqrt", nb.trees=
   target.names <- colnames(target.matrix)
   input.names <- colnames(input.matrix)
   #print(input.names)
+  #if no inputs or targets, return NULL
+  if (is.null(num.inputs) | is.null(num.targets)){
+    return(NULL)
+  }
   
   weight.matrix <- matrix(0.0, nrow=num.targets, ncol=num.inputs)
   rownames(weight.matrix) <- target.names
