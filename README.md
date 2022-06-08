@@ -41,7 +41,7 @@ The files in the Network_Files folder can be run in SCION using the following se
 
 - Hub connection: No
 
-You can use the included screenshot (shinyscreenshot.png) or the vignette to check your settings. This screenshot has the settings for non-temporal clustering.
+You can use the included screenshots (shinyscreenshot_protein.png and shinyscreenshot_phospho.png) or the vignette to check your settings. This screenshot has the settings for temporal clustering.
 
 # Version History
 
