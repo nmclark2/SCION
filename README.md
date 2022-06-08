@@ -13,23 +13,27 @@ Download all R files to your computer from Github. The files will be downloaded 
 - If you have previously used packages that load rlang (such as tidyverse), you may receive an error when trying to install some packages (such as dtwclust) that you need to update rlang, but it cannot be done. To fix this, you need to delete the rlang folder from your R folder, and then reinstall.
 
 # Test data
-Test data are provided in the TEST.zip folder. Download and unzip the files, then run using the following settings:
+Test data are provided in the TEST.zip folder. There are two folders inside of the TEST folder. 
 
-- Working directory: wherever your test files are (you can copy and paste the path from Windows/Mac file explorer)
+The folder named Raw_Files can be used to test the script create_data_tables.R in the utilities folder. Running this script using these files should produce the files located in the Network_Files folder.
 
-- Target matrix: target_mat_test.csv
+The files in the Network_Files folder can be run in SCION using the following settings. You can infer two separate networks, one for protein and one for phospho, by changing the regulator matrix and regulator list files.
 
-- Regulator matrix: reg_mat_test.csv
+- Working directory: wherever the Network_Files folder is (you can copy and paste the path from Windows/Mac file explorer)
 
-- Target list: target_list_test.csv
+- Target matrix: target_mat_RNA.csv
 
-- Regulator list: reg_list_test.csv
+- Regulator matrix: reg_mat_protein.csv (for phospho, use reg_mat_phospho.csv)
+
+- Target list: target_list_RNA.csv
+
+- Regulator list: reg_list_protein.csv (for phospho, use reg_list_phospho.csv)
 
 - Edge threshold: leave at the default value of 0.33
 
 - Clustering: You can use either Temporal or Non-Temporal and compare the results.
 
-- Clustering matrix: cluster_test.csv
+- Clustering matrix: cluster_mat_protein.csv (for phospho, use cluster_mat_phospho.csv)
 
 - Clustering threshold: If using temporal clustering, use 0.5. If using non-temporal clustering, use 2. 
 
@@ -40,6 +44,12 @@ Test data are provided in the TEST.zip folder. Download and unzip the files, the
 You can use the included screenshot (shinyscreenshot.png) or the vignette to check your settings. This screenshot has the settings for non-temporal clustering.
 
 # Version History
+
+# Version 3.1 - June 8, 2022
+
+- New, published test data from Zander et al, 2020, Nature Communications are now included. The previous test data have been removed. By incorporating published, citable test data, we hope to improve reproducibility of results as more features are added in the future.
+
+- A new "utilities" folder has been added which contains scripts that may be used for pre-processing data tables and downstream analysis of the network. The create_data_tables.R script may be used to prepare tables for input into SC-ION. The example files in the TEST.zip folder may be used to understand how the script works. The NMS.R script is used to calculate a network motif-based importance score from NetMatchStar output from Cytoscape. 
 
 # Version 3.0 - April 6, 2022
 
