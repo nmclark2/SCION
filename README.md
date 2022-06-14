@@ -6,7 +6,7 @@ Spatiotemporal Clustering and Inference of Omics Networks (SC-ION)
 # Citing SC-ION
 If using SC-ION in your own work, please cite both this repository (using the DOI link above) and:
 
-Clark, N.M., Buckner, E., Fisher, A.P. et al. Stem-cell-ubiquitous genes spatiotemporally coordinate division through regulation of stem-cell-specific gene networks. Nat Commun 10, 5574 (2019). https://doi.org/10.1038/s41467-019-13132-2
+Clark, N.M., Nolan, T.M., Wang, P. et al. Integrated omics networks reveal the temporal signaling events of brassinosteroid response in Arabidopsis. Nat Commun 12, 5858 (2021). https://doi.org/10.1038/s41467-021-26165-3
 
 # To run
 Download all R files to your computer from Github. The files will be downloaded in a .zip folder. Extract the .zip folder. This is your directory which contains SC-ION. Make sure to change the working directory in the "START_SCION.R" file to the directory which contains all of the R code that you downloaded from Github. Then, run the START_SCION.R file to build the RShiny App. Follow the instructions in the RShiny App (or in this vignette) to run your data. 
