@@ -86,8 +86,8 @@ RSGWM2<-function(target.gene.name,num.targets,target.names,input.matrix,target.m
   temp.input.matrix<-input.matrix
   if(target.gene.name %in% colnames(input.matrix))
   {
-    #rmind<-which(colnames(input.matrix)==target.gene.name)
-    rmind<-grep(target.gene.name,colnames(input.matrix),fixed=T)
+    rmind<-which(colnames(input.matrix)==target.gene.name)
+    #rmind<-grep(target.gene.name,colnames(input.matrix),fixed=T)
     temp.input.matrix<-input.matrix[,-rmind]
     print(paste("Removing:",target.gene.name,"fom Input| Index Number:",rmind," |  New Dimensions:",dim(temp.input.matrix)[1],"X",dim(temp.input.matrix)[2]))
   }
