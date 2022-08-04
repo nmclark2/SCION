@@ -50,6 +50,10 @@ You can use the included screenshots (shinyscreenshot_protein.png and shinyscree
 
 # Version History
 
+# Version 3.2 - August 4, 2022
+
+- A tutorial is now included in the SCION_tutorial.html file.
+
 # Version 3.1 - June 8, 2022
 
 - New, published test data from Zander et al, 2020, Nature Communications are now included. The previous test data have been removed. By incorporating published, citable test data, we hope to improve reproducibility of results as more features are added in the future.
