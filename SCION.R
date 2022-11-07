@@ -30,6 +30,11 @@ SCION <- function(target_genes_file,reg_genes_file,target_data_file,reg_data_fil
     myclustdata = clustering_data[row.names(clustering_data)%in%target_genes[,1] | row.names(clustering_data)%in%reg_genes[,1],]
   }
   
+  #make valid row names
+  rownames(mytargetdata) <- make.names(rownames(mytargetdata))
+  rownames(myregdata) <- make.names(rownames(myregdata))
+  rownames(myclustdata) <- make.names(rownames(myclustdata))
+  
   #run clustering first
   #if inputting a clusters file, read it in here
   if (is_clustering=="Temporal"){
