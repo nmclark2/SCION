@@ -14,7 +14,7 @@ ica_clustering<-function(clustering_data, k) {
   #for ICA, smaller k = tighter clusters, so we need to convert the threshold
   #k = 1.1-k
   
-  set.seed(2020)
+  #set.seed(2020)
   X.ICA<-fastICA(normmatrix,n.comp=ncol(normmatrix), alg.typ = "parallel", fun = "logcosh", alpha = 1.0,
                  method = "C", row.norm = FALSE, maxit = 5000, tol = 1e-03, verbose = TRUE)
   hc.ICA<-hclust(dist(X.ICA$S), method = "ward.D", members=NULL)

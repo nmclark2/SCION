@@ -6,6 +6,9 @@ SCION <- function(target_genes_file,reg_genes_file,target_data_file,reg_data_fil
   
   #set working directory which contains all your input files
   setwd(working_dir)
+  
+  #set seed to ensure same network each time
+  set.seed(2020)
 
   #if clustering, create folders
   if (!grepl("None",is_clustering)){
