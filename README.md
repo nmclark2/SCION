@@ -50,6 +50,10 @@ You can use the included screenshots (shinyscreenshot_protein.png and shinyscree
 
 # Version History
 
+# Version 3.3 Hotfix - November 28, 2022
+
+- set.seed() is now used in the main SCION function rather than in the ICA clustering function. This ensures the network inference and clustering returns the same results across multiple runs. If you would rather have different networks depending on the run, simply comment out the set.seed() line in SCION.R.
+
 # Version 3.3 - November 7, 2022
 
 - Converts gene IDs to R-complaint rownames. If you have experienced errors using tables with certain gene ID formats, this should now be fixed. Please be aware that the conversion to R-compliant rownames may change the format of your gene ID (for example: if your gene ID started with "0", now it will start with "X0"). Please be aware of these changes in any downstream processing of the networks.
