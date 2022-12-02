@@ -50,9 +50,11 @@ You can use the included screenshots (shinyscreenshot_protein.png and shinyscree
 
 # Version History
 
-# Version 3.3 Hotfix - November 28, 2022
+# Version 3.3 Hotfix - December 2, 2022
 
 - set.seed() is now used in the main SCION function rather than in the ICA clustering function. This ensures the network inference and clustering returns the same results across multiple runs. If you would rather have different networks depending on the run, simply comment out the set.seed() line in SCION.R.
+
+- Fixed an error with running without clustering
 
 # Version 3.3 - November 7, 2022
 
