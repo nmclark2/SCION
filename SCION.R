@@ -27,16 +27,17 @@ SCION <- function(target_genes_file,reg_genes_file,target_data_file,reg_data_fil
   mytargetdata = target_data[row.names(target_data)%in%target_genes[,1],]
   myregdata = reg_data[row.names(reg_data)%in%reg_genes[,1],]
   
+  #make valid row names
+  rownames(mytargetdata) <- make.names(rownames(mytargetdata))
+  rownames(myregdata) <- make.names(rownames(myregdata))
+  
   #read clustering data if needed
   if (grepl("Temporal",is_clustering)){
     clustering_data = read.csv(clustering_data_file,row.names=1)
     myclustdata = clustering_data[row.names(clustering_data)%in%target_genes[,1] | row.names(clustering_data)%in%reg_genes[,1],]
+    #make valid row names
+    rownames(myclustdata) <- make.names(rownames(myclustdata))
   }
-  
-  #make valid row names
-  rownames(mytargetdata) <- make.names(rownames(mytargetdata))
-  rownames(myregdata) <- make.names(rownames(myregdata))
-  rownames(myclustdata) <- make.names(rownames(myclustdata))
   
   #run clustering first
   #if inputting a clusters file, read it in here
@@ -46,6 +47,8 @@ SCION <- function(target_genes_file,reg_genes_file,target_data_file,reg_data_fil
     clusterresults <- ica_clustering(myclustdata,threshold)
   }else if (is_clustering=="Upload"){
     clusterresults <- read.csv(clusters_file,row.names=1)
+    #make valid row names
+    rownmaes(clusterresults) <- make.names(rownames(clusterresults))
   }
   
   #infer a network using GENIE3 on each cluster
@@ -86,7 +89,6 @@ SCION <- function(target_genes_file,reg_genes_file,target_data_file,reg_data_fil
                               stringsAsFactors=FALSE)
     row=1
     for (j in 1:dim(trimmednet)[1]){
-      print(j)
       for (k in 1:dim(trimmednet)[2]){
         #skip NaNs as these have no edge
         if (is.na(trimmednet[j,k])){
