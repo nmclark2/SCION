@@ -1,8 +1,8 @@
-#Version 3.0
-#April 2022
+#Version 4.0
+#April 2023
 
-SCION <- function(target_genes_file,reg_genes_file,target_data_file,reg_data_file,weightthreshold,
-                  is_clustering,clustering_data_file,threshold,clusters_file,hubs,working_dir){
+SCION <- function(target_genes_file,reg_genes_file,target_data_file,reg_data_file,normalize_edges,weightthreshold,
+                  is_clustering,clustering_data_file,threshold,clusters_file,hubs,num.cores,working_dir){
   
   #set working directory which contains all your input files
   setwd(working_dir)
@@ -23,6 +23,13 @@ SCION <- function(target_genes_file,reg_genes_file,target_data_file,reg_data_fil
   target_data = read.csv(target_data_file,row.names=1)
   reg_data = read.csv(reg_data_file,row.names=1)
   
+  #convert normalize_edges to boolean
+  if(normalize_edges=="Yes"){
+    normalize=T
+  }else{
+    normalize=F
+  }
+  
   #get data for targets and regulators
   mytargetdata = target_data[row.names(target_data)%in%target_genes[,1],]
   myregdata = reg_data[row.names(reg_data)%in%reg_genes[,1],]
@@ -41,14 +48,20 @@ SCION <- function(target_genes_file,reg_genes_file,target_data_file,reg_data_fil
   
   #run clustering first
   #if inputting a clusters file, read it in here
-  if (is_clustering=="Temporal"){
+  if (is_clustering=="Temporal:DTW"){
     clusterresults <- dtw_clustering(myclustdata,threshold)
-  }else if (is_clustering=="Non-Temporal"){
+  }else if (is_clustering=="Non-Temporal:ICA"){
     clusterresults <- ica_clustering(myclustdata,threshold)
+  }else if (is_clustering=="Non-Temporal:k-means"){
+    # scale k based on the smallest dimension (regulators or samples)
+    kmid <- min(dim(myregdata)[1],dim(myregdata)[2])
+    # if kmid < 20, change to 20 for a better starting number
+    kmid <- ifelse(kmid<20,20,kmid)
+    clusterresults <- kmeans_clustering(myclustdata,kmid)
   }else if (is_clustering=="Upload"){
     clusterresults <- read.csv(clusters_file,row.names=1)
     #make valid row names
-    rownmaes(clusterresults) <- make.names(rownames(clusterresults))
+    rownames(clusterresults) <- make.names(rownames(clusterresults))
   }
   
   #infer a network using GENIE3 on each cluster
@@ -58,7 +71,7 @@ SCION <- function(target_genes_file,reg_genes_file,target_data_file,reg_data_fil
     clustertargetdata = mytargetdata
     clusterregdata = myregdata
     
-    network = RS.Get.Weight.Matrix(t(clustertargetdata),t(clusterregdata))
+    network = RS.Get.Weight.Matrix(t(clustertargetdata),t(clusterregdata),normalize=normalize,num.cores=num.cores)
     
     # #trim matrix based on the ratio of TFs to targets - more TFs per target = more edges kept
     # TFratio = (dim(clusterregdata)[1])/(dim(clustertargetdata)[1])
@@ -128,7 +141,7 @@ SCION <- function(target_genes_file,reg_genes_file,target_data_file,reg_data_fil
         next
       }
       
-      network = RS.Get.Weight.Matrix(t(clustertargetdata),t(clusterregdata))
+      network = RS.Get.Weight.Matrix(t(clustertargetdata),t(clusterregdata),normalize=normalize,num.cores=num.cores)
       #if network inference failed, move on
       if (is.null(network)){
         next
@@ -215,7 +228,7 @@ SCION <- function(target_genes_file,reg_genes_file,target_data_file,reg_data_fil
           genes <- genes[seq(1,length(genes),by=2)]
           hubtargetdata = mytargetdata[row.names(mytargetdata)%in%genes,]
         }
-        network = RS.Get.Weight.Matrix(t(hubtargetdata),t(hubregdata))
+        network = RS.Get.Weight.Matrix(t(hubtargetdata),t(hubregdata),normalize=normalize,num.cores=num.cores)
         
         # #trim matrix based on the ratio of TFs to targets - more TFs per target = more edges kept
         # edgestokeep = floor(4*dim(hubtargetdata)[1])
