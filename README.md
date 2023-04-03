@@ -34,21 +34,35 @@ The files in the Network_Files folder can be run in SCION using the following se
 
 - Regulator list: reg_list_protein.csv (for phospho, use reg_list_phospho.csv)
 
+- Normalize edge weights: You can choose Yes (default) or No and compare the results.
+
 - Edge threshold: leave at the default value of 0.33
 
-- Clustering: You can use either Temporal or Non-Temporal and compare the results.
+- Clustering: You can use either Temporal:DTW, Non-Temporal:ICA, or Non-Temporal:k-means and compare the results.
 
 - Clustering matrix: cluster_mat_protein.csv (for phospho, use cluster_mat_phospho.csv)
 
-- Clustering threshold: If using temporal clustering, use 0.5. If using non-temporal clustering, use 2. 
+- Clustering threshold: If using temporal DTW clustering, use 0.5. If using non-temporal ICA clustering, use 2. If using non-temporal k-means clustering, the value here does not matter.
 
 - Clusters file: Leave empty
 
-- Hub connection: No
+- Hub connection: You can choose Yes (default) or No and compare the results.
+
+- Number of cores (for parallelization): This is a small network and will run in about 1 minute without parallelization. If you would like to experiment with parallelization, you can increase the number of cores. Note that this will be dependent on the number of available cores on your machine.
 
 You can use the included screenshots (shinyscreenshot_protein.png and shinyscreenshot_phospho.png) or the vignette to check your settings. This screenshot has the settings for temporal clustering.
 
 # Version History
+
+# Version 4.0 - April 3, 2023
+
+- There is now an option to use k-means clustering for non-temporal data. Unlike the other two methods, k-means does not use the threshold parameter. Instead, the number of clusters is chosen based on the dimension of the input matrix. The number of clusters is varied, and the silhouette index is used to choose an optimal number. If you wish to change the cluster number for k-means, you may alter the kmeans_clustering.R function.
+
+- There is now an option to not normalize edge weights. Previously, edge weights were always normalized to the [0,1] range prior to trimming. This results in more edges in the network, as edge weights with negative values are transformed prior to trimming. Not performing normalization will result in a smaller network, as edge weights with negative values will be automatically trimmed. 
+
+- Parallelization is now implemented in the RS.Get.Weight.Matrix.R function - the RS.Get.Weight.Matrix_cluster.R function is no longer necessary. The number of cores for parallelization can be specified in the RShiny App. Leaving the number of cores at the default value (1) will disable parallelization.
+
+- All prior tutorials and test datasets can still be used, but the UI will now appear slightly different due to the newly implemented parameters.
 
 # Version 3.3 Hotfix - December 2, 2022
 
