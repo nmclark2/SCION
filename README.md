@@ -52,6 +52,14 @@ The files in the Network_Files folder can be run in SCION using the following se
 
 You can use the included screenshots (shinyscreenshot_protein.png and shinyscreenshot_phospho.png) or the vignette to check your settings. This screenshot has the settings for temporal clustering.
 
+# Tutorials
+
+- A tutorial is included in the SCION_tutorial.html file using data from the TEST.zip folder.
+
+- A book chapter tutorial will be available soon. A pre-print of this book chapter is available at https://doi.org/10.5281/zenodo.6962317
+
+- Tutorials were written using SCION version 3.2. To replicate the tutorial results in version 4.0+, leave all new parameters at their default values.
+
 # Version History
 
 # Version 4.0 - April 3, 2023
