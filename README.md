@@ -58,7 +58,7 @@ You can use the included screenshots (shinyscreenshot_protein.png and shinyscree
 
 - A book chapter tutorial will be available soon. A pre-print of this book chapter is available at https://doi.org/10.5281/zenodo.6962317
 
-- Tutorials were written using SCION version 3.2. To replicate the tutorial results in version 4.0+, leave all new parameters at their default values.
+- Tutorials were written using SC-ION version 3.2. To replicate the tutorial results in version 4.0+, leave all new parameters at their default values.
 
 # Version History
 
