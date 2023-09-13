@@ -56,7 +56,7 @@ You can use the included screenshots (shinyscreenshot_protein.png and shinyscree
 
 - A tutorial is included in the SCION_tutorial.html file using data from the TEST.zip folder.
 
-- A book chapter tutorial has been published: Clark, N.M., Hurgobin, B., Kelley, D.R., Lewsey, M.G., Walley, J.W. (2023). A Practical Guide to Inferring Multi-Omics Networks in Plant Systems. In: Kaufmann, K., Vandepoele, K. (eds) Plant Gene Regulatory Networks. Methods in Molecular Biology, vol 2698. Humana, New York, NY. https://doi.org/10.1007/978-1-0716-3354-0_15. A pre-print of this book chapter is available at [https://doi.org/10.5281/zenodo.6962317](https://zenodo.org/record/8339502)
+- A book chapter tutorial has been published: Clark, N.M., Hurgobin, B., Kelley, D.R., Lewsey, M.G., Walley, J.W. (2023). A Practical Guide to Inferring Multi-Omics Networks in Plant Systems. In: Kaufmann, K., Vandepoele, K. (eds) Plant Gene Regulatory Networks. Methods in Molecular Biology, vol 2698. Humana, New York, NY. https://doi.org/10.1007/978-1-0716-3354-0_15. A pre-print of this book chapter is available at [(https://zenodo.org/record/8339502)](https://zenodo.org/badge/DOI/10.5281/zenodo.8339502.svg)
 
 - Tutorials were written using SC-ION version 3.2. To replicate the tutorial results in version 4.0+, leave all new parameters at their default values.
 
