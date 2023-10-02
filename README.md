@@ -62,6 +62,10 @@ You can use the included screenshots (shinyscreenshot_protein.png and shinyscree
 
 # Version History
 
+# Version 4.1 - October 2, 2023
+- The incorrect JA_FPKM_means.csv file was erroneously uploaded during a previous release. This file has now been updated to the correct version. All associated TEST data files have also been updated with the correct values. The tutorial can be used as-is, but you may notice changes in the test networks due to this change in the data. The networks should now be more consistent with the published versions. Thank you to Jeff Shen, UNLV for spotting this inconsistency.
+- Fixed an issue in the create_data_tables.R utilities file.
+
 # Version 4.0 - April 3, 2023
 
 - There is now an option to use k-means clustering for non-temporal data. Unlike the other two methods, k-means does not use the threshold parameter. Instead, the number of clusters is chosen based on the dimension of the input matrix. The number of clusters is varied, and the silhouette index is used to choose an optimal number. If you wish to change the cluster number for k-means, you may alter the kmeans_clustering.R function.
