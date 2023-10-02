@@ -15,7 +15,7 @@ cluster.str <- 'JA_FPKM_means.csv'
 TF.str <- 'Arabidopsis_TFs_AGRIS.xlsx'
 
 #list of candidates/targets
-candidates <- 'SC-ION_candidates_updated.txt'
+candidates <- 'SC-ION_candidates.txt'
 
 #read in files
 target.mat <- read.csv(target.str,row.names=1)
