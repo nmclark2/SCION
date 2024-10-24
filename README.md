@@ -62,6 +62,10 @@ You can use the included screenshots (shinyscreenshot_protein.png and shinyscree
 
 # Version History
 
+# Version 4.2 - October 24, 2024
+- SC-ION is not compatible with missing values. Previously, it was left to the user to remove missing values. Now, SC-ION will automatically filter any rows in the target, regulator, and clustering matrices with missing values. When this is performed, a message is printed to warn the user that there are missing values in the dataset which have been removed. If one wants to include the features with missing values, those values will need to be imputed.
+- Package compatibility has been checked for R-4.3. SC-ION should be compatible with R-4.3.
+
 # Version 4.1 - October 2, 2023
 - The incorrect JA_FPKM_means.csv file was erroneously uploaded during a previous release. This file has now been updated to the correct version. All associated TEST data files have also been updated with the correct values. The tutorial can be used as-is, but you may notice changes in the test networks due to this change in the data. The networks should now be more consistent with the published versions. Thank you to Jeff Shen, UNLV for spotting this inconsistency.
 - Fixed an issue in the create_data_tables.R utilities file.
