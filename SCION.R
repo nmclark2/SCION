@@ -1,5 +1,5 @@
-#Version 4.0
-#April 2023
+#Version 4.2
+#Oct 2024
 
 SCION <- function(target_genes_file,reg_genes_file,target_data_file,reg_data_file,normalize_edges,weightthreshold,
                   is_clustering,clustering_data_file,threshold,clusters_file,hubs,num.cores,working_dir){
@@ -38,12 +38,26 @@ SCION <- function(target_genes_file,reg_genes_file,target_data_file,reg_data_fil
   rownames(mytargetdata) <- make.names(rownames(mytargetdata))
   rownames(myregdata) <- make.names(rownames(myregdata))
   
+  #check for missing values. SC-ION cannot run with missing values.
+  #if missing values are found, remove them and report.
+  if(sum(is.na(mytargetdata),is.na(myregdata))>0){
+    message('Missing values detected in target and/or regulator matrix. SC-ION cannot use missing values. Features with missing values have been removed. To retain these features, please impute missing values.')
+    mytargetdata <- na.omit(mytargetdata)
+    myregdata <- na.omit(myregdata)
+  }
+  
   #read clustering data if needed
   if (grepl("Temporal",is_clustering)){
     clustering_data = read.csv(clustering_data_file,row.names=1)
     myclustdata = clustering_data[row.names(clustering_data)%in%target_genes[,1] | row.names(clustering_data)%in%reg_genes[,1],]
     #make valid row names
     rownames(myclustdata) <- make.names(rownames(myclustdata))
+    #check for missing values. clustering cannot run with missing values.
+    #if missing values are found, remove them and report.
+    if(sum(is.na(myclustdata))>0){
+      message('Missing values detected in clustering matrix. SC-ION cannot use missing values. Features with missing values have been removed. To retain these features, please impute missing values.')
+      myclustdata <- na.omit(myclustdata)
+    }
   }
   
   #run clustering first
