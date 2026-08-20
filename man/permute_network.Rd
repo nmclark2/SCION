@@ -9,6 +9,7 @@ permute_network(
   reg,
   cluster_assignment = NULL,
   n_permutations = 100,
+  indices = seq_len(n_permutations),
   permute_dim = c("col", "row"),
   base_seed = 0,
   num.cores = 1,
@@ -27,7 +28,15 @@ network (the \code{target}/\code{reg} elements of \code{\link[=run_scion]{run_sc
 \item{cluster_assignment}{the fixed cluster assignment used for the real network
 (the \code{cluster_assignment} element of \code{\link[=run_scion]{run_scion()}}'s result, or \code{NULL}).}
 
-\item{n_permutations}{number of permutations (typically 100).}
+\item{n_permutations}{number of permutations (typically 100). Ignored if
+\code{indices} is given explicitly.}
+
+\item{indices}{which permutation indices to run; each index \code{i} is seeded
+with \code{base_seed + i}, independent of every other index and of \code{num.cores}
+(see Details). Defaults to \code{seq_len(n_permutations)}, i.e. all of them in
+one call. Pass a single index -- e.g. an HPC job array's task ID -- to run
+just one permutation per job; see \code{\link[=save_permutation]{save_permutation()}}/\code{\link[=load_permutations]{load_permutations()}}
+for a file-based workflow built around exactly that pattern.}
 
 \item{permute_dim}{passed to \code{\link[=shuffle_matrix]{shuffle_matrix()}} as \code{dim}; \code{"col"} (default)
 matches the validated lab scheme.}
@@ -35,11 +44,13 @@ matches the validated lab scheme.}
 \item{base_seed}{permutation \code{i} uses seed \code{base_seed + i}. Default 0
 reproduces the lab scheme (\code{set.seed(i)}).}
 
-\item{num.cores}{when \verb{> 2}, permutations run across a FORK cluster (one
-permutation per worker); each permutation's own \code{\link[=infer_network]{infer_network()}} call is
-then forced to \code{num.cores = 1} internally to avoid nesting parallelism.
-When \code{num.cores <= 2}, permutations run serially and their own
-\code{num.cores} is passed straight through to each \code{\link[=infer_network]{infer_network()}} call.}
+\item{num.cores}{when \verb{> 2}, the requested indices run across a FORK cluster
+(one permutation per worker at a time); each permutation's own
+\code{\link[=infer_network]{infer_network()}} call is then forced to \code{num.cores = 1} internally to
+avoid nesting parallelism. When \code{num.cores <= 2}, indices run serially (in
+this process or, for a single index, as whatever single HPC job called
+this) and their own \code{num.cores} is passed straight through to each
+\code{\link[=infer_network]{infer_network()}} call.}
 
 \item{weightthreshold, normalize, connect_hubs, ptm_sep}{passed to \code{\link[=infer_network]{infer_network()}}.}
 
@@ -50,8 +61,8 @@ produce \code{target}/\code{reg}'s real network} -- see \code{\link[=RS.Get.Weig
 \item{...}{additional arguments passed to \code{\link[=infer_network]{infer_network()}}.}
 }
 \value{
-a list of length \code{n_permutations}, each element an edge table as
-returned by \code{\link[=infer_network]{infer_network()}}.
+a list the same length as \code{indices}, each element an edge table as
+returned by \code{\link[=infer_network]{infer_network()}}, named by its permutation index (as a string).
 }
 \description{
 Shuffles the target/regulator matrices and reruns \code{\link[=infer_network]{infer_network()}} \code{n_permutations}

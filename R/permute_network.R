@@ -31,28 +31,38 @@ shuffle_matrix <- function(mat, dim = c("col", "row")) {
 #'   network (the `target`/`reg` elements of [run_scion()]'s result).
 #' @param cluster_assignment the fixed cluster assignment used for the real network
 #'   (the `cluster_assignment` element of [run_scion()]'s result, or `NULL`).
-#' @param n_permutations number of permutations (typically 100).
+#' @param n_permutations number of permutations (typically 100). Ignored if
+#'   `indices` is given explicitly.
+#' @param indices which permutation indices to run; each index `i` is seeded
+#'   with `base_seed + i`, independent of every other index and of `num.cores`
+#'   (see Details). Defaults to `seq_len(n_permutations)`, i.e. all of them in
+#'   one call. Pass a single index -- e.g. an HPC job array's task ID -- to run
+#'   just one permutation per job; see [save_permutation()]/[load_permutations()]
+#'   for a file-based workflow built around exactly that pattern.
 #' @param permute_dim passed to [shuffle_matrix()] as `dim`; `"col"` (default)
 #'   matches the validated lab scheme.
 #' @param base_seed permutation `i` uses seed `base_seed + i`. Default 0
 #'   reproduces the lab scheme (`set.seed(i)`).
-#' @param num.cores when `> 2`, permutations run across a FORK cluster (one
-#'   permutation per worker); each permutation's own [infer_network()] call is
-#'   then forced to `num.cores = 1` internally to avoid nesting parallelism.
-#'   When `num.cores <= 2`, permutations run serially and their own
-#'   `num.cores` is passed straight through to each [infer_network()] call.
+#' @param num.cores when `> 2`, the requested indices run across a FORK cluster
+#'   (one permutation per worker at a time); each permutation's own
+#'   [infer_network()] call is then forced to `num.cores = 1` internally to
+#'   avoid nesting parallelism. When `num.cores <= 2`, indices run serially (in
+#'   this process or, for a single index, as whatever single HPC job called
+#'   this) and their own `num.cores` is passed straight through to each
+#'   [infer_network()] call.
 #' @param weightthreshold,normalize,connect_hubs,ptm_sep passed to [infer_network()].
 #' @param engine passed to [infer_network()]. **Must be the same engine used to
 #'   produce `target`/`reg`'s real network** -- see [RS.Get.Weight.Matrix()] and
 #'   [compute_fdr_threshold()].
 #' @param ... additional arguments passed to [infer_network()].
-#' @return a list of length `n_permutations`, each element an edge table as
-#'   returned by [infer_network()].
+#' @return a list the same length as `indices`, each element an edge table as
+#'   returned by [infer_network()], named by its permutation index (as a string).
 #' @export
 permute_network <- function(target, reg, cluster_assignment = NULL, n_permutations = 100,
-                             permute_dim = c("col", "row"), base_seed = 0, num.cores = 1,
-                             weightthreshold = 0, normalize = TRUE, connect_hubs = TRUE,
-                             engine = c("randomForest", "ranger"), ptm_sep = ".", ...) {
+                             indices = seq_len(n_permutations), permute_dim = c("col", "row"),
+                             base_seed = 0, num.cores = 1, weightthreshold = 0, normalize = TRUE,
+                             connect_hubs = TRUE, engine = c("randomForest", "ranger"),
+                             ptm_sep = ".", ...) {
   permute_dim <- match.arg(permute_dim)
   engine <- match.arg(engine)
 
@@ -69,11 +79,12 @@ permute_network <- function(target, reg, cluster_assignment = NULL, n_permutatio
                    ptm_sep = ptm_sep, ...)
   }
 
-  if (outer_parallel) {
+  results <- if (outer_parallel) {
     clst <- parallel::makeCluster(num.cores - 1, type = "FORK")
     on.exit(parallel::stopCluster(clst), add = TRUE)
-    parallel::parLapply(clst, seq_len(n_permutations), run_one)
+    parallel::parLapply(clst, indices, run_one)
   } else {
-    lapply(seq_len(n_permutations), run_one)
+    lapply(indices, run_one)
   }
+  stats::setNames(results, as.character(indices))
 }
