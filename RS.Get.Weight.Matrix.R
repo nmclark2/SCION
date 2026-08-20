@@ -52,15 +52,19 @@ RS.Get.Weight.Matrix<- function(target.matrix, input.matrix, K="sqrt", nb.trees=
   # compute importances for every target gene
   names(target.names)<-target.names
   #return(list(target.names,input.matrix,target.matrix))
-  
+
+  # one seed per target, drawn in the parent, so the forest for a given target is
+  # the same whichever worker fits it -- and whether or not there is a worker at all
+  target.seeds <- setNames(sample.int(.Machine$integer.max, length(target.names)), target.names)
+
   #parallelize if at least 3 cores, otherwise, don't
   if(num.cores>2){
     clst <- makeCluster(num.cores-1,type="FORK",outfile="log.txt")
     registerDoParallel(clst)
-    imList<-parLapply(cl=clst, X=target.names, function(x) RSGWM2(x,num.targets,target.names,input.matrix,target.matrix,trace,mtry,nb.trees,importance.measure,...))
+    imList<-parLapply(cl=clst, X=target.names, function(x) RSGWM2(x,num.targets,target.names,input.matrix,target.matrix,trace,mtry,nb.trees,importance.measure,seed=target.seeds[[x]],...))
     stopCluster(cl=clst)
   }else{
-    imList<-lapply(target.names,function(x) RSGWM2(x,num.targets,target.names,input.matrix,target.matrix,trace,mtry,nb.trees,importance.measure,...))
+    imList<-lapply(target.names,function(x) RSGWM2(x,num.targets,target.names,input.matrix,target.matrix,trace,mtry,nb.trees,importance.measure,seed=target.seeds[[x]],...))
   }
   
   #return(imList)
@@ -79,8 +83,11 @@ RS.Get.Weight.Matrix<- function(target.matrix, input.matrix, K="sqrt", nb.trees=
   #    return(list(Weight=weight.matrix,Model=model.matrix,PedictionCorrelations=cor.vec))
 }   
 
-RSGWM2<-function(target.gene.name,num.targets,target.names,input.matrix,target.matrix,trace,mtry,nb.trees,importance.measure,...)
+RSGWM2<-function(target.gene.name,num.targets,target.names,input.matrix,target.matrix,trace,mtry,nb.trees,importance.measure,seed=NULL,...)
 {
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
   target.gene.idx<-which(target.names==target.gene.name)
   if (trace) 
   {
