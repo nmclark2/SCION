@@ -1,0 +1,41 @@
+Package: SCION
+Title: Spatiotemporal Clustering and Inference of Omics Networks
+Version: 5.0.0
+Authors@R:
+    person("Natalie", "Clark", , "nclark@broadinstitute.org", role = c("aut", "cre"))
+Description: Infers gene regulatory / omics networks from multi-omics data using
+    random-forest based feature importance (a GENIE3-style approach), with optional
+    pre-clustering of genes, permutation-based FDR thresholding of inferred edges,
+    network visualization, and a Shiny app covering the full run / threshold /
+    visualize workflow.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Depends:
+    R (>= 4.0.0)
+Imports:
+    cluster,
+    doParallel,
+    dtw,
+    dtwclust,
+    fastICA,
+    ggplot2,
+    igraph,
+    parallel,
+    plotly,
+    randomForest,
+    shiny,
+    shinydashboard,
+    shinydashboardPlus,
+    shinyjs,
+    shinyWidgets,
+    stats,
+    utils
+Suggests:
+    cmapR,
+    ranger,
+    shinytest2,
+    testthat (>= 3.2.0),
+    visNetwork
+Config/testthat/edition: 3
