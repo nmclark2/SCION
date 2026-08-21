@@ -11,7 +11,7 @@ read_scion_inputs(
   reg_genes_file = NULL,
   gene_list_header = TRUE,
   clustering_data_file = NULL,
-  format = c("csv", "gct")
+  format = c("auto", "csv", "gct")
 )
 }
 \arguments{
@@ -35,10 +35,12 @@ dropped.}
 genes, columns = samples), used by \code{\link[=cluster_genes]{cluster_genes()}}. Restricted to genes
 that appear in \code{target_genes_file} or \code{reg_genes_file} when those are given.}
 
-\item{format}{\code{"csv"} (default) or \code{"gct"}. Regulator gene names may use
-either a dot (\code{SOX2.S35}) or underscore (\code{MEF2C_S453s}) PTM-site
-convention; both are left as-is here (see the \code{ptm_sep} argument of
-\code{\link[=infer_network]{infer_network()}} for where the convention matters downstream).}
+\item{format}{\code{"auto"} (default), \code{"csv"}, or \code{"gct"}. \code{"auto"} detects GCT(x)
+from \code{target_data_file}'s extension (\code{.gct}/\code{.gctx}) and falls back to CSV
+otherwise -- pass \code{"csv"}/\code{"gct"} explicitly to override. Regulator gene
+names may use either a dot (\code{SOX2.S35}) or underscore (\code{MEF2C_S453s})
+PTM-site convention; both are left as-is here (see the \code{ptm_sep} argument
+of \code{\link[=infer_network]{infer_network()}} for where the convention matters downstream).}
 }
 \value{
 a list with \code{target} and \code{reg} data frames (genes as rows, samples as

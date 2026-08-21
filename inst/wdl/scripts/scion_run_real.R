@@ -16,7 +16,7 @@ option_list <- list(
   make_option("--reg_genes_file", type = "character", default = NULL),
   make_option("--gene_list_header", type = "logical", default = TRUE),
   make_option("--clustering_data_file", type = "character", default = NULL),
-  make_option("--format", type = "character", default = "csv"),
+  make_option("--format", type = "character", default = "auto"),
   make_option("--clustering_method", type = "character", default = "none"),
   make_option("--clustering_threshold", type = "double", default = 0.5),
   make_option("--clusters_file", type = "character", default = NULL),

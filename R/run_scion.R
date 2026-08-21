@@ -51,7 +51,7 @@
 #'   `fdr_result$thresholded_network`).
 #' @export
 run_scion <- function(target_data_file, reg_data_file, target_genes_file = NULL,
-                       reg_genes_file = NULL, gene_list_header = TRUE, format = c("csv", "gct"),
+                       reg_genes_file = NULL, gene_list_header = TRUE, format = c("auto", "csv", "gct"),
                        clustering_method = c("none", "dtw", "ica", "kmeans", "upload"),
                        clustering_data_file = NULL, clustering_threshold = 0.5,
                        clusters_file = NULL, connect_hubs = TRUE, weightthreshold = 0,

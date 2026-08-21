@@ -4,3 +4,5 @@
 .Ruserdata
 log.txt
 .DS_Store
+.claude/settings.local.json
+dev-test-data/

@@ -10,7 +10,7 @@ run_scion(
   target_genes_file = NULL,
   reg_genes_file = NULL,
   gene_list_header = TRUE,
-  format = c("csv", "gct"),
+  format = c("auto", "csv", "gct"),
   clustering_method = c("none", "dtw", "ica", "kmeans", "upload"),
   clustering_data_file = NULL,
   clustering_threshold = 0.5,

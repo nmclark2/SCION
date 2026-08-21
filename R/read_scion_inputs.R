@@ -22,18 +22,23 @@
 #' @param clustering_data_file optional path to a CSV clustering matrix (rows =
 #'   genes, columns = samples), used by [cluster_genes()]. Restricted to genes
 #'   that appear in `target_genes_file` or `reg_genes_file` when those are given.
-#' @param format `"csv"` (default) or `"gct"`. Regulator gene names may use
-#'   either a dot (`SOX2.S35`) or underscore (`MEF2C_S453s`) PTM-site
-#'   convention; both are left as-is here (see the `ptm_sep` argument of
-#'   [infer_network()] for where the convention matters downstream).
+#' @param format `"auto"` (default), `"csv"`, or `"gct"`. `"auto"` detects GCT(x)
+#'   from `target_data_file`'s extension (`.gct`/`.gctx`) and falls back to CSV
+#'   otherwise -- pass `"csv"`/`"gct"` explicitly to override. Regulator gene
+#'   names may use either a dot (`SOX2.S35`) or underscore (`MEF2C_S453s`)
+#'   PTM-site convention; both are left as-is here (see the `ptm_sep` argument
+#'   of [infer_network()] for where the convention matters downstream).
 #' @return a list with `target` and `reg` data frames (genes as rows, samples as
 #'   columns, row names made syntactically valid via [make.names()]), and
 #'   `cluster_data` (or `NULL` if `clustering_data_file` was not given).
 #' @export
 read_scion_inputs <- function(target_data_file, reg_data_file, target_genes_file = NULL,
                                reg_genes_file = NULL, gene_list_header = TRUE,
-                               clustering_data_file = NULL, format = c("csv", "gct")) {
+                               clustering_data_file = NULL, format = c("auto", "csv", "gct")) {
   format <- match.arg(format)
+  if (format == "auto") {
+    format <- detect_scion_format(target_data_file)
+  }
 
   if (format == "gct") {
     if (!requireNamespace("cmapR", quietly = TRUE)) {
@@ -96,4 +101,11 @@ read_scion_inputs <- function(target_data_file, reg_data_file, target_genes_file
   }
 
   list(target = target_data, reg = reg_data, cluster_data = cluster_data)
+}
+
+#' Detect whether a file is GCT(x) or delimited-text, by extension
+#' @keywords internal
+detect_scion_format <- function(path) {
+  ext <- tolower(tools::file_ext(path))
+  if (ext %in% c("gct", "gctx")) "gct" else "csv"
 }
