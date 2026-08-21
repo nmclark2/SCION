@@ -21,6 +21,11 @@ run_scion(
   engine = c("randomForest", "ranger"),
   ptm_sep = ".",
   seed = 2020,
+  permute = FALSE,
+  n_permutations = 100,
+  permute_dim = c("col", "row"),
+  base_seed = 0,
+  target_fdr = 0.05,
   output_file = NULL,
   ...
 )
@@ -46,16 +51,39 @@ to \code{\link[=infer_network]{infer_network()}}.}
 inputs produce the same network every run. Default matches the legacy
 \code{SCION()} behavior. Set to \code{NULL} to skip seeding.}
 
+\item{permute}{if \code{TRUE}, also run \code{\link[=permute_network]{permute_network()}} and
+\code{\link[=compute_fdr_threshold]{compute_fdr_threshold()}} against the just-inferred network, in this same
+call. Runs \code{n_permutations} permutations using the SAME \code{weightthreshold},
+\code{normalize}, \code{connect_hubs}, \code{engine}, \code{ptm_sep}, \code{num.cores}, and \code{...}
+used for the real network above -- there is no separate way to set these
+for the permutations, since the FDR calculation requires them to match.
+For sharding permutations across an HPC job array instead of running them
+all in this one call, use \code{permute = FALSE} here and call
+\code{\link[=permute_network]{permute_network()}} / \code{\link[=save_permutation]{save_permutation()}} / \code{\link[=load_permutations]{load_permutations()}}
+directly against this call's \code{target}/\code{reg}/\code{cluster_assignment}.}
+
+\item{n_permutations, permute_dim, base_seed}{passed to \code{\link[=permute_network]{permute_network()}}
+when \code{permute = TRUE}.}
+
+\item{target_fdr}{passed to \code{\link[=compute_fdr_threshold]{compute_fdr_threshold()}} when \code{permute = TRUE}.}
+
 \item{output_file}{optional path to write the final edge table to (tab-
-separated, Cytoscape-importable). \code{NULL} (default) writes nothing.}
+separated, Cytoscape-importable). \code{NULL} (default) writes nothing. When
+\code{permute = TRUE}, writes the FDR-thresholded network, not the raw one.}
 
 \item{...}{additional arguments passed to \code{\link[=infer_network]{infer_network()}} /
-\code{\link[=RS.Get.Weight.Matrix]{RS.Get.Weight.Matrix()}}.}
+\code{\link[=RS.Get.Weight.Matrix]{RS.Get.Weight.Matrix()}} (and, when \code{permute = TRUE}, to the internal
+\code{\link[=permute_network]{permute_network()}} call as well, so e.g. \code{nb.trees} stays consistent
+between the real network and its permutations).}
 }
 \value{
-a list with \code{network} (the edge table), \code{target}, \code{reg} (the
-processed input matrices), \code{cluster_assignment} (or \code{NULL}), and \code{params}
-(the arguments used, for reference / for feeding into \code{\link[=permute_network]{permute_network()}}).
+a list with \code{network} (the real edge table), \code{target}, \code{reg} (the
+processed input matrices), \code{cluster_assignment} (or \code{NULL}), \code{params}
+(the arguments used, for reference / for feeding into \code{\link[=permute_network]{permute_network()}}
+yourself), and -- only when \code{permute = TRUE} -- \code{permuted_networks} (the
+\code{\link[=permute_network]{permute_network()}} result), \code{fdr_result} (the \code{\link[=compute_fdr_threshold]{compute_fdr_threshold()}}
+result), and \code{network_thresholded} (shorthand for
+\code{fdr_result$thresholded_network}).
 }
 \description{
 User-facing wrapper around \code{\link[=read_scion_inputs]{read_scion_inputs()}}, \code{\link[=cluster_genes]{cluster_genes()}}, and

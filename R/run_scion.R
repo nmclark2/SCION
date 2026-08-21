@@ -22,13 +22,33 @@
 #' @param seed RNG seed set once, before clustering and inference, so the same
 #'   inputs produce the same network every run. Default matches the legacy
 #'   `SCION()` behavior. Set to `NULL` to skip seeding.
+#' @param permute if `TRUE`, also run [permute_network()] and
+#'   [compute_fdr_threshold()] against the just-inferred network, in this same
+#'   call. Runs `n_permutations` permutations using the SAME `weightthreshold`,
+#'   `normalize`, `connect_hubs`, `engine`, `ptm_sep`, `num.cores`, and `...`
+#'   used for the real network above -- there is no separate way to set these
+#'   for the permutations, since the FDR calculation requires them to match.
+#'   For sharding permutations across an HPC job array instead of running them
+#'   all in this one call, use `permute = FALSE` here and call
+#'   [permute_network()] / [save_permutation()] / [load_permutations()]
+#'   directly against this call's `target`/`reg`/`cluster_assignment`.
+#' @param n_permutations,permute_dim,base_seed passed to [permute_network()]
+#'   when `permute = TRUE`.
+#' @param target_fdr passed to [compute_fdr_threshold()] when `permute = TRUE`.
 #' @param output_file optional path to write the final edge table to (tab-
-#'   separated, Cytoscape-importable). `NULL` (default) writes nothing.
+#'   separated, Cytoscape-importable). `NULL` (default) writes nothing. When
+#'   `permute = TRUE`, writes the FDR-thresholded network, not the raw one.
 #' @param ... additional arguments passed to [infer_network()] /
-#'   [RS.Get.Weight.Matrix()].
-#' @return a list with `network` (the edge table), `target`, `reg` (the
-#'   processed input matrices), `cluster_assignment` (or `NULL`), and `params`
-#'   (the arguments used, for reference / for feeding into [permute_network()]).
+#'   [RS.Get.Weight.Matrix()] (and, when `permute = TRUE`, to the internal
+#'   [permute_network()] call as well, so e.g. `nb.trees` stays consistent
+#'   between the real network and its permutations).
+#' @return a list with `network` (the real edge table), `target`, `reg` (the
+#'   processed input matrices), `cluster_assignment` (or `NULL`), `params`
+#'   (the arguments used, for reference / for feeding into [permute_network()]
+#'   yourself), and -- only when `permute = TRUE` -- `permuted_networks` (the
+#'   [permute_network()] result), `fdr_result` (the [compute_fdr_threshold()]
+#'   result), and `network_thresholded` (shorthand for
+#'   `fdr_result$thresholded_network`).
 #' @export
 run_scion <- function(target_data_file, reg_data_file, target_genes_file = NULL,
                        reg_genes_file = NULL, format = c("csv", "gct"),
@@ -37,10 +57,13 @@ run_scion <- function(target_data_file, reg_data_file, target_genes_file = NULL,
                        clusters_file = NULL, connect_hubs = TRUE, weightthreshold = 0,
                        normalize = TRUE, num.cores = 1,
                        engine = c("randomForest", "ranger"), ptm_sep = ".", seed = 2020,
+                       permute = FALSE, n_permutations = 100,
+                       permute_dim = c("col", "row"), base_seed = 0, target_fdr = 0.05,
                        output_file = NULL, ...) {
   format <- match.arg(format)
   clustering_method <- match.arg(clustering_method)
   engine <- match.arg(engine)
+  permute_dim <- match.arg(permute_dim)
 
   if (!is.null(seed)) {
     set.seed(seed)
@@ -58,15 +81,32 @@ run_scion <- function(target_data_file, reg_data_file, target_genes_file = NULL,
                             connect_hubs = connect_hubs, num.cores = num.cores, engine = engine,
                             ptm_sep = ptm_sep, ...)
 
-  if (!is.null(output_file)) {
-    write_scion_network(network, output_file)
-  }
-
   result <- list(network = network, target = inputs$target, reg = inputs$reg,
                   cluster_assignment = cluster_assignment,
                   params = list(weightthreshold = weightthreshold, normalize = normalize,
                                  connect_hubs = connect_hubs, num.cores = num.cores,
                                  engine = engine, ptm_sep = ptm_sep, seed = seed))
+
+  if (permute) {
+    permuted_networks <- permute_network(inputs$target, inputs$reg,
+                                          cluster_assignment = cluster_assignment,
+                                          n_permutations = n_permutations,
+                                          permute_dim = permute_dim, base_seed = base_seed,
+                                          num.cores = num.cores,
+                                          weightthreshold = weightthreshold, normalize = normalize,
+                                          connect_hubs = connect_hubs, engine = engine,
+                                          ptm_sep = ptm_sep, ...)
+    fdr_result <- compute_fdr_threshold(network, permuted_networks, target_fdr = target_fdr)
+
+    result$permuted_networks <- permuted_networks
+    result$fdr_result <- fdr_result
+    result$network_thresholded <- fdr_result$thresholded_network
+  }
+
+  if (!is.null(output_file)) {
+    write_scion_network(if (permute) result$network_thresholded else network, output_file)
+  }
+
   result
 }
 
