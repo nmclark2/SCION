@@ -23,26 +23,27 @@ test_that("Shiny app: running a network shows weight/outdegree diagnostics (no p
   # Run tab (sidebar): upload the small test matrices and run the real network
   app$upload_file(`run-target_data_file` = target_file)
   app$upload_file(`run-reg_data_file` = reg_file)
-  app$set_inputs(`run-num_cores` = 1, `run-weightthreshold` = 0, wait_ = FALSE)
+  app$set_inputs(`run-num_cores` = 1, wait_ = FALSE)
   app$click("run-run")
   app$wait_for_idle(timeout = 60000)
 
   status_html <- app$get_html("#run-status")
   expect_match(status_html, "edges")
+  expect_match(status_html, "Download full network")
 
   # a completed run should auto-navigate away from the default Help tab
   expect_equal(app$get_value(input = "navbar-tabs"), "diagnostics")
 
   # weight/outdegree distributions show without ever running permutations
-  expect_match(app$get_html("#diagnostics-weight_distribution"), "<img")
-  expect_match(app$get_html("#diagnostics-outdegree_distribution"), "<img")
+  expect_match(app$get_html("#diagnostics-weight_distribution"), "plotly")
+  expect_match(app$get_html("#diagnostics-outdegree_distribution"), "plotly")
 
   # no FDR result yet, so no FDR curve/weight-comparison plots -- but a flat
   # weight cutoff is still available (this is the point: thresholding by
   # weight shouldn't require having run permutations)
   expect_no_match(app$get_html("#diagnostics-fdr_plots"), "FDR curve")
   summary_html <- app$get_html("#diagnostics-summary")
-  expect_match(summary_html, "no additional cutoff")
+  expect_match(summary_html, "no cutoff applied")
 
   app$set_inputs(`diagnostics-manual_threshold` = 0.2, wait_ = FALSE)
   app$click("diagnostics-apply_manual_threshold")
@@ -76,7 +77,7 @@ test_that("Shiny app: sidebar's 'Run permutations' checkbox populates the Networ
 
   app$upload_file(`run-target_data_file` = target_file)
   app$upload_file(`run-reg_data_file` = reg_file)
-  app$set_inputs(`run-num_cores` = 1, `run-weightthreshold` = 0, wait_ = FALSE)
+  app$set_inputs(`run-num_cores` = 1, wait_ = FALSE)
   app$set_inputs(`run-run_permutations` = TRUE)
   app$set_inputs(`run-n_permutations` = 3, wait_ = FALSE)
   app$click("run-run")
@@ -109,7 +110,6 @@ test_that("Shiny app: 'Load example data' only pre-fills parameters, does not au
   app$wait_for_idle(timeout = 10000)
 
   # parameters got pre-filled, including clustering (a clustering file is bundled)...
-  expect_equal(app$get_value(input = "run-weightthreshold"), 0.33)
   expect_equal(app$get_value(input = "run-clustering_method"), "dtw")
   # ...but nothing has actually run, and we're still on the default Help tab
   expect_equal(app$get_value(input = "navbar-tabs"), "help")
@@ -171,5 +171,5 @@ test_that("Shiny app: 'Load example data' + 'Run network' runs the bundled Arabi
   status_html <- app$get_html("#run-status")
   expect_match(status_html, "edges")
   expect_equal(app$get_value(input = "navbar-tabs"), "diagnostics")
-  expect_match(app$get_html("#diagnostics-weight_distribution"), "<img")
+  expect_match(app$get_html("#diagnostics-weight_distribution"), "plotly")
 })

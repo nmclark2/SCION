@@ -45,6 +45,10 @@
 #' @param output_file optional path to write the final edge table to (tab-
 #'   separated, Cytoscape-importable). `NULL` (default) writes nothing. When
 #'   `permute = TRUE`, writes the FDR-thresholded network, not the raw one.
+#'   Also triggers [save_diagnostic_plots()], saved alongside it (same
+#'   directory, named from `output_file`'s base name) -- there's no Shiny app
+#'   to view/download them from interactively in this CLI/scripted path, so
+#'   they're written automatically instead of requiring a separate call.
 #' @param ... additional arguments passed to [infer_network()] /
 #'   [RS.Get.Weight.Matrix()] (and, when `permute = TRUE`, to the internal
 #'   [permute_network()] call as well, so e.g. `nb.trees` stays consistent
@@ -133,6 +137,7 @@ run_scion <- function(target_data_file, reg_data_file, target_genes_file = NULL,
 
   if (!is.null(output_file)) {
     write_scion_network(if (permute) result$network_thresholded else network, output_file)
+    save_diagnostic_plots(result, dirname(output_file), prefix = tools::file_path_sans_ext(basename(output_file)))
   }
 
   result

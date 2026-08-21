@@ -17,12 +17,12 @@ diagnosticsTabUI <- function(id = "diagnostics") {
       shinydashboardPlus::box(
         title = "Edge weight distribution", width = 6, status = "primary", solidHeader = TRUE,
         headerBorder = TRUE,
-        shiny::plotOutput(ns("weight_distribution"))
+        plotly::plotlyOutput(ns("weight_distribution"))
       ),
       shinydashboardPlus::box(
         title = "Regulator out-degree distribution", width = 6, status = "primary", solidHeader = TRUE,
         headerBorder = TRUE,
-        shiny::plotOutput(ns("outdegree_distribution"))
+        plotly::plotlyOutput(ns("outdegree_distribution"))
       )
     ),
     shiny::uiOutput(ns("fdr_plots")),
@@ -40,16 +40,18 @@ diagnosticsTabServer <- function(id = "diagnostics", network_result) {
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
-    output$weight_distribution <- shiny::renderPlot({
+    output$weight_distribution <- plotly::renderPlotly({
       res <- network_result()
       shiny::validate(shiny::need(res, "Run a network first (see the sidebar)."))
-      plot_weight_distribution(res$network)
+      # always the full, unthresholded network -- the cutoff line only means
+      # something if you can see where it falls in the whole distribution
+      plotly::ggplotly(plot_weight_distribution(res$network, cutoff = current_threshold()))
     })
 
-    output$outdegree_distribution <- shiny::renderPlot({
+    output$outdegree_distribution <- plotly::renderPlotly({
       res <- network_result()
       shiny::validate(shiny::need(res, "Run a network first (see the sidebar)."))
-      plot_outdegree_distribution(res$network)
+      plotly::ggplotly(plot_outdegree_distribution(res$network))
     })
 
     # The permutation results (network_result()$permuted_networks) never need
@@ -128,6 +130,20 @@ diagnosticsTabServer <- function(id = "diagnostics", network_result) {
       base
     })
 
+    # the single cutoff value currently in effect (manual, or FDR-based), for
+    # marking on the edge weight distribution -- NULL if neither is active.
+    current_threshold <- shiny::reactive({
+      mt <- manual_threshold()
+      if (!is.null(mt)) {
+        return(mt)
+      }
+      fdr <- base_fdr()
+      if (!is.null(fdr) && !is.na(fdr$threshold)) {
+        return(fdr$threshold)
+      }
+      NULL
+    })
+
     output$fdr_plots <- shiny::renderUI({
       res <- network_result()
       if (is.null(res) || is.null(res$fdr_result)) {
@@ -136,24 +152,24 @@ diagnosticsTabServer <- function(id = "diagnostics", network_result) {
       shiny::fluidRow(
         shinydashboardPlus::box(
           title = "FDR curve", width = 6, status = "primary", solidHeader = TRUE, headerBorder = TRUE,
-          shiny::plotOutput(ns("fdr_curve"))
+          plotly::plotlyOutput(ns("fdr_curve"))
         ),
         shinydashboardPlus::box(
           title = "Real vs. permuted weight distribution", width = 6, status = "primary",
           solidHeader = TRUE, headerBorder = TRUE,
-          shiny::plotOutput(ns("weight_comparison"))
+          plotly::plotlyOutput(ns("weight_comparison"))
         )
       )
     })
 
-    output$fdr_curve <- shiny::renderPlot({
+    output$fdr_curve <- plotly::renderPlotly({
       shiny::validate(shiny::need(network_result()$fdr_result, "No permutation results yet."))
-      plot_fdr_curve(display_fdr_for_plot(), type = "curve")
+      plotly::ggplotly(plot_fdr_curve(display_fdr_for_plot(), type = "curve"))
     })
 
-    output$weight_comparison <- shiny::renderPlot({
+    output$weight_comparison <- plotly::renderPlotly({
       shiny::validate(shiny::need(network_result()$fdr_result, "No permutation results yet."))
-      plot_fdr_curve(display_fdr_for_plot(), type = "weight_comparison")
+      plotly::ggplotly(plot_fdr_curve(display_fdr_for_plot(), type = "weight_comparison"))
     })
 
     # always available once a network exists -- a flat weight cutoff doesn't
@@ -167,7 +183,7 @@ diagnosticsTabServer <- function(id = "diagnostics", network_result) {
       has_fdr <- !is.null(res$fdr_result)
       shiny::fluidRow(
         shinydashboardPlus::box(
-          title = "Result", width = 12, status = "primary", solidHeader = TRUE, headerBorder = TRUE,
+          title = "Threshold network", width = 12, status = "primary", solidHeader = TRUE, headerBorder = TRUE,
           shiny::fluidRow(
             if (has_fdr) {
               shiny::column(
@@ -191,7 +207,8 @@ diagnosticsTabServer <- function(id = "diagnostics", network_result) {
           ),
           shiny::hr(),
           shiny::uiOutput(ns("summary")),
-          shiny::downloadButton(ns("download_thresholded"), "Download thresholded network")
+          shiny::downloadButton(ns("download_thresholded"), "Download thresholded network"),
+          shiny::downloadButton(ns("download_plots"), "Download all plots (PDF)")
         )
       )
     })
@@ -212,7 +229,7 @@ diagnosticsTabServer <- function(id = "diagnostics", network_result) {
         basis <- sprintf("%s FDR < %s", if (!is.null(fdr_override())) "recomputed" else "default", fdr$target_fdr)
       } else {
         threshold_label <- 0
-        basis <- "no additional cutoff beyond the sidebar's edge weight cutoff"
+        basis <- "no cutoff applied -- showing the full network"
       }
       shiny::tagList(
         shiny::strong(sprintf("Threshold: %s (%s)", threshold_label, basis)),
@@ -226,6 +243,27 @@ diagnosticsTabServer <- function(id = "diagnostics", network_result) {
         net <- display_network()
         shiny::req(net)
         write_scion_network(net, file)
+      }
+    )
+
+    # a single multi-page, vector PDF (one plot per page) via the same ggplot2
+    # objects behind the interactive plotly views above -- plotly's own image
+    # export rasterizes (and needs an external "kaleido" install), so this
+    # goes straight to ggplot2 -> grDevices::pdf() for genuinely unbounded
+    # resolution, matching what save_diagnostic_plots() does for CLI runs.
+    output$download_plots <- shiny::downloadHandler(
+      filename = function() "diagnostic_plots.pdf",
+      content = function(file) {
+        res <- network_result()
+        shiny::req(res)
+        grDevices::pdf(file, width = 7, height = 5)
+        on.exit(grDevices::dev.off(), add = TRUE)
+        print(plot_weight_distribution(res$network, cutoff = current_threshold()))
+        print(plot_outdegree_distribution(res$network))
+        if (!is.null(res$fdr_result)) {
+          print(plot_fdr_curve(display_fdr_for_plot(), type = "curve"))
+          print(plot_fdr_curve(display_fdr_for_plot(), type = "weight_comparison"))
+        }
       }
     )
 

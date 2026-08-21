@@ -130,4 +130,29 @@ test_that("output_file writes the thresholded network when permute = TRUE", {
 
   written <- utils::read.delim(out_file)
   expect_equal(nrow(written), nrow(result$network_thresholded))
+
+  # output_file also triggers save_diagnostic_plots() automatically -- the
+  # CLI/scripted path has no app to view/download the interactive plots from
+  expect_true(file.exists(file.path(tmp_dir, "out_weight_distribution.pdf")))
+  expect_true(file.exists(file.path(tmp_dir, "out_outdegree_distribution.pdf")))
+  expect_true(file.exists(file.path(tmp_dir, "out_fdr_curve.pdf")))
+  expect_true(file.exists(file.path(tmp_dir, "out_weight_comparison.pdf")))
+})
+
+test_that("output_file without permute = TRUE still saves the weight/outdegree plots, not FDR ones", {
+  skip_on_cran()
+  mats <- make_test_matrices()
+  tmp_dir <- tempfile("scion-test-")
+  dir.create(tmp_dir)
+  on.exit(unlink(tmp_dir, recursive = TRUE), add = TRUE)
+  files <- write_test_csvs(mats, tmp_dir)
+  out_file <- file.path(tmp_dir, "out.txt")
+
+  run_scion(files$target_file, files$reg_file, weightthreshold = 0, normalize = FALSE,
+            num.cores = 1, engine = "randomForest", nb.trees = 50, trace = FALSE,
+            output_file = out_file)
+
+  expect_true(file.exists(file.path(tmp_dir, "out_weight_distribution.pdf")))
+  expect_true(file.exists(file.path(tmp_dir, "out_outdegree_distribution.pdf")))
+  expect_false(file.exists(file.path(tmp_dir, "out_fdr_curve.pdf")))
 })

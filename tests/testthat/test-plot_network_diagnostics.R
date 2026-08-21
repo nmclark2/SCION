@@ -17,3 +17,16 @@ test_that("plot_weight_distribution() and plot_outdegree_distribution() return g
   expect_s3_class(plot_weight_distribution(network), "ggplot")
   expect_s3_class(plot_outdegree_distribution(network), "ggplot")
 })
+
+test_that("plot_weight_distribution() adds a cutoff line only when cutoff is given", {
+  network <- data.frame(Regulator = "r1", Target = c("t1", "t2"), Weight = c(0.5, 0.9),
+                         stringsAsFactors = FALSE)
+
+  is_vline_layer <- function(p) {
+    any(vapply(p$layers, function(l) inherits(l$geom, "GeomVline"), logical(1)))
+  }
+
+  expect_false(is_vline_layer(plot_weight_distribution(network)))
+  expect_false(is_vline_layer(plot_weight_distribution(network, cutoff = NA)))
+  expect_true(is_vline_layer(plot_weight_distribution(network, cutoff = 0.6)))
+})

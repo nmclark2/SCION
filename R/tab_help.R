@@ -29,11 +29,11 @@ helpTabUI <- function(id = "help") {
     shiny::p("Optionally cluster genes before network inference: temporal (DTW), non-temporal (ICA or
               k-means), or upload your own pre-computed clusters. If you don't supply a clustering
               matrix, it defaults to your target and regulator data combined."),
-    shiny::strong("Edge weight cutoff / Normalize edge weights"),
-    shiny::p("A manual cutoff for trimming low-confidence edges (0 keeps everything). Normalizing
-              rescales edge weights to [0, 1] before applying the cutoff. For a principled,
-              FDR-controlled cutoff instead of a manual one, leave this at 0 and check
-              \"Run permutations\" below instead."),
+    shiny::strong("Normalize edge weights"),
+    shiny::p("Rescales edge weights to [0, 1]. There's no weight cutoff here -- the app always
+              runs (and gives you) the full, unthresholded network; apply a cutoff afterward on
+              the Network Diagnostics tab's \"Threshold network\" box, where it can be adjusted
+              interactively without re-running inference each time."),
     shiny::strong("Random forest engine"),
     shiny::p("randomForest (default) matches previously published results. ranger is a much faster
               alternative, at the cost of no longer being numerically comparable to randomForest-based
@@ -43,10 +43,18 @@ helpTabUI <- function(id = "help") {
               distribution of edge weights, then picks the largest edge-weight cutoff for which the
               false discovery rate stays below your target (default 0.05). Results show up in the
               Network Diagnostics tab alongside the weight and out-degree distributions."),
+    shiny::strong("Download full network"),
+    shiny::p("Once a run completes, downloads the complete, unthresholded network as a tab-separated
+              file -- the same network shown in the weight/out-degree distributions on the Network
+              Diagnostics tab."),
     shiny::h3("Network Diagnostics"),
     shiny::p("Always shows the real network's edge weight distribution and regulator out-degree
               distribution. Once you've run permutations, the FDR curve and the real-vs-permuted
-              weight distribution appear here too, to sanity-check the FDR-based cutoff."),
+              weight distribution appear here too, to sanity-check the FDR-based cutoff. Plots are
+              interactive (hover/zoom); \"Download all plots (PDF)\" exports the same plots as a
+              multi-page, publication-quality vector PDF (one page per plot) instead. Running SCION
+              without the app (i.e. via run_scion() with output_file set) saves these same PDFs
+              automatically -- see save_diagnostic_plots()."),
     shiny::h3("Visualize"),
     shiny::p("Always shows the thresholded network from the Network Diagnostics tab (FDR-based,
               a manual weight cutoff, or the full real network if neither has been applied there) --

@@ -25,9 +25,11 @@ Imports:
     parallel,
     randomForest,
     stats,
+    tools,
     utils
 Suggests:
     cmapR,
+    plotly,
     ranger,
     shiny,
     shinydashboard,

@@ -46,10 +46,6 @@ runSidebarUI <- function(id = "run") {
       shiny::fileInput(ns("clusters_file"), "Pre-computed clusters file")
     ),
     shiny::checkboxInput(ns("connect_hubs"), "Connect cluster hubs", value = TRUE),
-    shiny::numericInput(ns("weightthreshold"),
-                         shiny::tagList("Edge weight cutoff", info_tooltip(
-                           "Locked at 0 during permutations -- cutoff is applied afterward, to the FDR result."
-                         )), value = 0, min = 0, step = 0.1),
     shiny::checkboxInput(ns("normalize"),
                           shiny::tagList("Normalize edge weights", info_tooltip(
                             "Locked off during permutations -- it would cap every permutation's top weight at 1."
@@ -159,15 +155,16 @@ runSidebarServer <- function(id = "run", parent_session) {
     # "Load example data" only pre-fills parameters -- it does NOT run
     # anything. The user reviews/adjusts them, then clicks "Run network"
     # themselves, same as with their own uploaded files. Mirrors the settings
-    # documented in the README/tutorial for this dataset: edge cutoff 0.33,
-    # temporal (DTW) clustering with the bundled clustering matrix.
+    # documented in the README/tutorial for this dataset: temporal (DTW)
+    # clustering with the bundled clustering matrix. The tutorial's edge
+    # cutoff (0.33) is applied afterward, on the Network Diagnostics tab --
+    # the app always runs the full, unthresholded network (see below).
     shiny::observeEvent(input$load_example, {
       using_example_data(TRUE)
       shiny::updateCheckboxInput(session, "gene_list_header", value = TRUE)
       shiny::updateSelectInput(session, "clustering_method", selected = "dtw")
-      # skip these two when permutations are already on -- that lock keeps them at 0/FALSE
+      # skipped when permutations are already on -- that lock keeps this at FALSE
       if (!isTRUE(input$run_permutations)) {
-        shiny::updateNumericInput(session, "weightthreshold", value = 0.33)
         shiny::updateCheckboxInput(session, "normalize", value = TRUE)
       }
       shiny::updateCheckboxInput(session, "connect_hubs", value = TRUE)
@@ -182,26 +179,20 @@ runSidebarServer <- function(id = "run", parent_session) {
 
     shiny::observeEvent(input$clear_example, using_example_data(FALSE))
 
-    # Permutation testing needs the full, unthresholded, unnormalized network
-    # to compare against -- a manual weight cutoff would bias which edges get
-    # compared, and per-network normalization would force every permutation's
+    # Permutation testing needs the full, unnormalized network to compare
+    # against -- per-network normalization would force every permutation's
     # top edge weight to 1 regardless of signal (see compute_fdr_threshold()).
-    # Lock both off for the duration, restoring whatever the user had set when
-    # they turn permutations back off.
-    weightthreshold_before_permute <- shiny::reactiveVal(0)
+    # Lock it off for the duration, restoring whatever the user had set when
+    # they turn permutations back off. (No separate weight-cutoff lock needed
+    # here -- the app never applies one at run time at all; see input$run below.)
     normalize_before_permute <- shiny::reactiveVal(TRUE)
     shiny::observeEvent(input$run_permutations, {
       if (isTRUE(input$run_permutations)) {
-        weightthreshold_before_permute(input$weightthreshold)
         normalize_before_permute(input$normalize)
-        shiny::updateNumericInput(session, "weightthreshold", value = 0)
         shiny::updateCheckboxInput(session, "normalize", value = FALSE)
-        shinyjs::disable("weightthreshold")
         shinyjs::disable("normalize")
       } else {
-        shinyjs::enable("weightthreshold")
         shinyjs::enable("normalize")
-        shiny::updateNumericInput(session, "weightthreshold", value = weightthreshold_before_permute())
         shiny::updateCheckboxInput(session, "normalize", value = normalize_before_permute())
       }
     }, ignoreInit = TRUE)
@@ -282,7 +273,10 @@ runSidebarServer <- function(id = "run", parent_session) {
         clustering_threshold = input$clustering_threshold,
         clusters_file = if (!is.null(input$clusters_file)) input$clusters_file$datapath,
         connect_hubs = input$connect_hubs,
-        weightthreshold = input$weightthreshold,
+        # always the full, unthresholded network -- apply a cutoff afterward,
+        # on the Network Diagnostics tab, where it can be adjusted without
+        # re-running inference (see "Threshold network" there)
+        weightthreshold = 0,
         normalize = input$normalize,
         num.cores = input$num_cores,
         engine = input$engine,
@@ -312,9 +306,19 @@ runSidebarServer <- function(id = "run", parent_session) {
             if (is.na(res$fdr_result$threshold)) "not reached" else signif(res$fdr_result$threshold, 4),
             nrow(res$network_thresholded)
           ))
-        }
+        },
+        shiny::downloadButton(ns("download_full"), "Download full network")
       )
     })
+
+    output$download_full <- shiny::downloadHandler(
+      filename = function() "full_network.tsv",
+      content = function(file) {
+        res <- network_result()
+        shiny::req(res)
+        write_scion_network(res$network, file)
+      }
+    )
 
     network_result
   })
