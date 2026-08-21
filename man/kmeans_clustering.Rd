@@ -9,7 +9,9 @@ kmeans_clustering(clustering_data, kmid)
 \arguments{
 \item{clustering_data}{data frame or matrix, rows = genes, columns = samples.}
 
-\item{kmid}{starting/center value of k to test around.}
+\item{kmid}{starting/center value of k to test around. Candidate k values
+derived from this are clamped to \verb{[2, nrow(clustering_data) - 1]}, since
+kmeans/silhouette need k < the number of genes being clustered.}
 }
 \value{
 a data frame: centered/scaled \code{clustering_data} plus a \code{clusters} column.

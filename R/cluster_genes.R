@@ -7,7 +7,9 @@
 #' real network on identical gene groupings.
 #'
 #' @param clustering_data data frame or matrix of expression data to cluster on
-#'   (rows = genes, columns = samples). Ignored when `method = "none"`.
+#'   (rows = genes, columns = samples). Ignored when `method = "none"`. If
+#'   `NULL` and `method` needs data (`"dtw"`/`"ica"`/`"kmeans"`), it is derived
+#'   from `target_data`/`reg_data` -- see Details.
 #' @param method clustering method: `"none"` (no clustering, one network for all
 #'   genes), `"dtw"` (temporal, dynamic time warping), `"ica"` (non-temporal,
 #'   independent component analysis), `"kmeans"` (non-temporal, k-means), or
@@ -17,16 +19,23 @@
 #' @param clusters_file path to a CSV of pre-computed clusters (first column =
 #'   gene names, a `clusters` column with cluster numbers). Required when
 #'   `method = "upload"`.
-#' @param reg_data the processed regulator matrix (rows = genes, columns =
-#'   samples), used only by `method = "kmeans"` to pick a starting `k`.
-#'   Historically SCION scales k off the *regulator* matrix's dimensions, not
-#'   the clustering matrix's -- preserved here for behavior-compatibility.
-#'   Falls back to `clustering_data`'s own dimensions if not supplied.
+#' @param target_data,reg_data the processed target/regulator matrices (rows =
+#'   genes, columns = samples). `reg_data` alone is also used by `method =
+#'   "kmeans"` to pick a starting `k` (see Details); `target_data` is only used
+#'   to derive `clustering_data` when it isn't supplied.
 #' @return a data frame with a `clusters` column (row names = gene names), or
 #'   `NULL` when `method = "none"`.
+#' @details
+#' When `clustering_data` is `NULL` and clustering is requested, it defaults to
+#' `reg_data` plus whatever rows of `target_data` aren't already in `reg_data`
+#' (regulator data takes precedence for genes that are both a target and a
+#' regulator) -- i.e. the same genes that will be used for network inference,
+#' combined into one matrix. This matches the historical PANOPLY behavior of
+#' auto-deriving a clustering matrix from the target/regulator data when no
+#' separate clustering file is provided.
 #' @export
-cluster_genes <- function(clustering_data, method = c("none", "dtw", "ica", "kmeans", "upload"),
-                           threshold = 0.5, clusters_file = NULL, reg_data = NULL) {
+cluster_genes <- function(clustering_data = NULL, method = c("none", "dtw", "ica", "kmeans", "upload"),
+                           threshold = 0.5, clusters_file = NULL, target_data = NULL, reg_data = NULL) {
   method <- match.arg(method)
 
   if (method == "none") {
@@ -37,6 +46,18 @@ cluster_genes <- function(clustering_data, method = c("none", "dtw", "ica", "kme
     clusters <- utils::read.csv(clusters_file, row.names = 1)
     rownames(clusters) <- make.names(rownames(clusters))
     return(clusters)
+  }
+
+  if (is.null(clustering_data)) {
+    if (is.null(target_data) || is.null(reg_data)) {
+      stop("clustering_data was not supplied, and target_data/reg_data are required to derive ",
+           "it automatically for method = '", method, "'.")
+    }
+    message("No clustering_data supplied; combining target_data and reg_data for clustering.")
+    target_data <- as.data.frame(target_data)
+    reg_data <- as.data.frame(reg_data)
+    target_only <- target_data[!rownames(target_data) %in% rownames(reg_data), , drop = FALSE]
+    clustering_data <- rbind(reg_data, target_only)
   }
 
   if (method == "dtw") {

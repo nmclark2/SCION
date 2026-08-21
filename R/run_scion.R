@@ -74,8 +74,8 @@ run_scion <- function(target_data_file, reg_data_file, target_genes_file = NULL,
                                clustering_data_file = clustering_data_file, format = format)
 
   cluster_assignment <- cluster_genes(inputs$cluster_data, method = clustering_method,
-                                       threshold = clustering_threshold,
-                                       clusters_file = clusters_file, reg_data = inputs$reg)
+                                       threshold = clustering_threshold, clusters_file = clusters_file,
+                                       target_data = inputs$target, reg_data = inputs$reg)
 
   network <- infer_network(inputs$target, inputs$reg, cluster_assignment = cluster_assignment,
                             weightthreshold = weightthreshold, normalize = normalize,

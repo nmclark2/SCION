@@ -5,16 +5,19 @@
 \title{Cluster genes prior to network inference}
 \usage{
 cluster_genes(
-  clustering_data,
+  clustering_data = NULL,
   method = c("none", "dtw", "ica", "kmeans", "upload"),
   threshold = 0.5,
   clusters_file = NULL,
+  target_data = NULL,
   reg_data = NULL
 )
 }
 \arguments{
 \item{clustering_data}{data frame or matrix of expression data to cluster on
-(rows = genes, columns = samples). Ignored when \code{method = "none"}.}
+(rows = genes, columns = samples). Ignored when \code{method = "none"}. If
+\code{NULL} and \code{method} needs data (\code{"dtw"}/\code{"ica"}/\code{"kmeans"}), it is derived
+from \code{target_data}/\code{reg_data} -- see Details.}
 
 \item{method}{clustering method: \code{"none"} (no clustering, one network for all
 genes), \code{"dtw"} (temporal, dynamic time warping), \code{"ica"} (non-temporal,
@@ -28,11 +31,9 @@ independent component analysis), \code{"kmeans"} (non-temporal, k-means), or
 gene names, a \code{clusters} column with cluster numbers). Required when
 \code{method = "upload"}.}
 
-\item{reg_data}{the processed regulator matrix (rows = genes, columns =
-samples), used only by \code{method = "kmeans"} to pick a starting \code{k}.
-Historically SCION scales k off the \emph{regulator} matrix's dimensions, not
-the clustering matrix's -- preserved here for behavior-compatibility.
-Falls back to \code{clustering_data}'s own dimensions if not supplied.}
+\item{target_data, reg_data}{the processed target/regulator matrices (rows =
+genes, columns = samples). \code{reg_data} alone is also used by \code{method = "kmeans"} to pick a starting \code{k} (see Details); \code{target_data} is only used
+to derive \code{clustering_data} when it isn't supplied.}
 }
 \value{
 a data frame with a \code{clusters} column (row names = gene names), or
@@ -44,4 +45,13 @@ assignment is computed once from the real, unpermuted data; when running
 permutations via \code{\link[=permute_network]{permute_network()}}, the same assignment must be reused
 rather than recomputed, so that permuted networks are compared against the
 real network on identical gene groupings.
+}
+\details{
+When \code{clustering_data} is \code{NULL} and clustering is requested, it defaults to
+\code{reg_data} plus whatever rows of \code{target_data} aren't already in \code{reg_data}
+(regulator data takes precedence for genes that are both a target and a
+regulator) -- i.e. the same genes that will be used for network inference,
+combined into one matrix. This matches the historical PANOPLY behavior of
+auto-deriving a clustering matrix from the target/regulator data when no
+separate clustering file is provided.
 }
