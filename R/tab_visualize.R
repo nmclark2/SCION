@@ -7,36 +7,30 @@ visualizeTabUI <- function(id = "visualize") {
   ns <- shiny::NS(id)
   shinydashboardPlus::box(
     title = "Network", width = 12, status = "primary", solidHeader = TRUE, headerBorder = TRUE,
-    shiny::uiOutput(ns("plot_container")),
-    sidebar = shinydashboardPlus::boxSidebar(
-      shiny::selectInput(ns("which_network"), "Network to display",
-                          choices = c("Real" = "real", "FDR-thresholded" = "thresholded")),
-      shiny::checkboxInput(ns("interactive"), "Interactive (visNetwork)", value = TRUE),
-      shiny::downloadButton(ns("download"), "Download network file"),
-      id = ns("viz_sidebar"), icon = shiny::icon("gears", class = "fa-2xl"), width = 25,
-      background = "rgba(91, 98, 104, 0.9)"
-    )
+    shiny::fluidRow(
+      shiny::column(6, shiny::checkboxInput(ns("interactive"), "Interactive (visNetwork)", value = TRUE)),
+      shiny::column(6, shiny::downloadButton(ns("download"), "Download network file"))
+    ),
+    shiny::uiOutput(ns("plot_container"))
   )
 }
 
-#' @param network_result a reactiveVal/reactive holding [run_scion()]'s result (or `NULL`).
-#' @param fdr_result a reactive holding [compute_fdr_threshold()]'s result (or `NULL`), as
-#'   returned by the Permutation tab's server.
+#' Always shows the thresholded network (real network filtered by FDR and/or a manual
+#' weight cutoff, whichever is currently active on the Network Diagnostics tab, or the
+#' unfiltered real network if neither has been applied there) -- adjust the cutoff on
+#' that tab rather than switching views here.
+#'
+#' @param thresholded_network a reactive holding the currently displayed edge table (or
+#'   `NULL`), as returned by the Network Diagnostics tab's server.
 #' @noRd
-visualizeTabServer <- function(id = "visualize", network_result, fdr_result) {
+visualizeTabServer <- function(id = "visualize", thresholded_network) {
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
     current_network <- shiny::reactive({
-      if (identical(input$which_network, "thresholded")) {
-        fdr <- fdr_result()
-        shiny::validate(shiny::need(fdr, "Run permutations first, or switch to the real network."))
-        fdr$thresholded_network
-      } else {
-        res <- network_result()
-        shiny::validate(shiny::need(res, "Run a network first (see the sidebar)."))
-        res$network
-      }
+      net <- thresholded_network()
+      shiny::validate(shiny::need(net, "Run a network first (see the sidebar)."))
+      net
     })
 
     output$plot_container <- shiny::renderUI({
@@ -60,7 +54,7 @@ visualizeTabServer <- function(id = "visualize", network_result, fdr_result) {
     })
 
     output$download <- shiny::downloadHandler(
-      filename = function() paste0(input$which_network, "_network.tsv"),
+      filename = function() "network.tsv",
       content = function(file) write_scion_network(current_network(), file)
     )
   })

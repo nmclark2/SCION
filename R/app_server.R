@@ -13,6 +13,6 @@ app_server <- function(input, output, session) {
   })
 
   network_result <- runSidebarServer("run", parent_session = session)
-  fdr_result <- diagnosticsTabServer("diagnostics", network_result = network_result)
-  visualizeTabServer("visualize", network_result = network_result, fdr_result = fdr_result)
+  thresholded_network <- diagnosticsTabServer("diagnostics", network_result = network_result)
+  visualizeTabServer("visualize", thresholded_network = thresholded_network)
 }

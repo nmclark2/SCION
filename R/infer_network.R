@@ -24,9 +24,12 @@ weight_matrix_to_edges <- function(network, weightthreshold) {
 #'
 #' @param edge_table a data frame as returned by [weight_matrix_to_edges()].
 #' @return a character vector of regulator names with the maximum out-degree
-#'   (length > 1 if there is a tie).
+#'   (length > 1 if there is a tie), or `character(0)` if `edge_table` has no rows.
 #' @keywords internal
 pick_hub_genes <- function(edge_table) {
+  if (nrow(edge_table) == 0) {
+    return(character(0))
+  }
   edge_counts <- table(edge_table$Regulator)
   names(edge_counts)[edge_counts == max(edge_counts)]
 }
@@ -70,6 +73,13 @@ infer_network_clustered <- function(target_data, reg_data, cluster_assignment, w
     clustertargetdata <- target_data[row.names(target_data) %in% mygenes, , drop = FALSE]
     clusterregdata <- reg_data[row.names(reg_data) %in% mygenes, , drop = FALSE]
 
+    # randomForest's %IncMSE importance is deterministically NA with exactly one
+    # regulator (confirmed empirically -- not data-dependent), so a 1-regulator
+    # cluster can never produce a usable edge; skip it outright rather than
+    # silently getting an all-NA weight matrix from RS.Get.Weight.Matrix().
+    if (dim(clusterregdata)[1] <= 1) {
+      next
+    }
     # GENIE3 cannot infer autoregulation on one TF, and errors with exactly two
     # (since one gets removed) -- so at least 3 TFs are needed when TFs are also
     # targets. Only relevant when TFs overlap with targets.
@@ -112,6 +122,9 @@ infer_hub_network <- function(target_data, reg_data, myhubs, weightthreshold, no
     genes <- unlist(strsplit(myhubs, ptm_sep, fixed = TRUE))
     genes <- genes[seq(1, length(genes), by = 2)]
     hubtargetdata <- target_data[row.names(target_data) %in% genes, , drop = FALSE]
+  }
+  if (dim(hubregdata)[1] <= 1) {
+    return(NULL)
   }
   network <- RS.Get.Weight.Matrix(t(hubtargetdata), t(hubregdata), normalize = normalize,
                                    num.cores = num.cores, engine = engine, seed = seed, ...)

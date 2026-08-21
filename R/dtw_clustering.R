@@ -24,7 +24,6 @@ dtw_clustering <- function(clustering_data, threshold) {
   # for each gene, compare its profile to the rest of the genes
   # any gene with a sufficiently matching profile is clustered together
   for (j in seq_len(dim(normmatrix)[1])) {
-    message(sprintf("Clustering gene %d", j))
     if (clusters[j] != 0) {
       next
     } else {
@@ -51,5 +50,6 @@ dtw_clustering <- function(clustering_data, threshold) {
       }
     }
   }
+  message(sprintf("Found %d clusters", length(unique(clusters))))
   data.frame(normmatrix, clusters, row.names = row.names(mydata))
 }

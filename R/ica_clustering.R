@@ -13,11 +13,12 @@ ica_clustering <- function(clustering_data, k) {
 
   x_ica <- fastICA::fastICA(normmatrix, n.comp = ncol(normmatrix), alg.typ = "parallel",
                              fun = "logcosh", alpha = 1.0, method = "C", row.norm = FALSE,
-                             maxit = 5000, tol = 1e-03, verbose = TRUE)
+                             maxit = 5000, tol = 1e-03, verbose = FALSE)
   hc_ica <- stats::hclust(stats::dist(x_ica$S), method = "ward.D", members = NULL)
   mojena <- mean(hc_ica$height) + k * stats::sd(hc_ica$height)
   cluster_num <- length(hc_ica$height[hc_ica$height > mojena]) + 1
   clusters <- stats::cutree(hc_ica, k = cluster_num)
+  message(sprintf("Found %d clusters", cluster_num))
 
   results <- as.data.frame(cbind(normmatrix, clusters))
   results

@@ -34,10 +34,21 @@ test_that("Shiny app: running a network shows weight/outdegree diagnostics (no p
   expect_equal(app$get_value(input = "navbar-tabs"), "diagnostics")
 
   # weight/outdegree distributions show without ever running permutations
-  diagnostics_html <- app$get_html("#diagnostics-fdr_section")
-  expect_match(diagnostics_html, "Run permutations")
   expect_match(app$get_html("#diagnostics-weight_distribution"), "<img")
   expect_match(app$get_html("#diagnostics-outdegree_distribution"), "<img")
+
+  # no FDR result yet, so no FDR curve/weight-comparison plots -- but a flat
+  # weight cutoff is still available (this is the point: thresholding by
+  # weight shouldn't require having run permutations)
+  expect_no_match(app$get_html("#diagnostics-fdr_plots"), "FDR curve")
+  summary_html <- app$get_html("#diagnostics-summary")
+  expect_match(summary_html, "no additional cutoff")
+
+  app$set_inputs(`diagnostics-manual_threshold` = 0.2, wait_ = FALSE)
+  app$click("diagnostics-apply_manual_threshold")
+  app$wait_for_idle(timeout = 10000)
+  summary_html <- app$get_html("#diagnostics-summary")
+  expect_match(summary_html, "Threshold: 0.2 \\(manual cutoff\\)")
 
   # Visualize tab -- static plot (no visNetwork widget in a headless snapshot)
   app$set_inputs(`visualize-interactive` = FALSE)

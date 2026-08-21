@@ -4,6 +4,21 @@
 # which tab is active, matching protigy-v2's setup-sidebar convention).
 ################################################################################
 
+#' A small "(i)" icon that shows `...` (pasted together) as a hover tooltip --
+#' for a label that needs a sentence of explanation without permanently taking
+#' up sidebar space the way a `helpText()` paragraph would. Pure CSS (see the
+#' `.scion-tooltip` rule in [app_UI()]) rather than the native `title`
+#' attribute, which is inconsistent across browsers (slow to appear, or not at
+#' all for inline elements in some layouts).
+#' @keywords internal
+info_tooltip <- function(...) {
+  shiny::tags$span(
+    class = "scion-tooltip", `data-tooltip` = paste0(...),
+    shiny::icon("circle-info"),
+    style = "color: #888; margin-left: 4px; font-size: 0.85em;"
+  )
+}
+
 #' @keywords internal
 runSidebarUI <- function(id = "run") {
   ns <- shiny::NS(id)
@@ -31,21 +46,14 @@ runSidebarUI <- function(id = "run") {
       shiny::fileInput(ns("clusters_file"), "Pre-computed clusters file")
     ),
     shiny::checkboxInput(ns("connect_hubs"), "Connect cluster hubs", value = TRUE),
-    shiny::numericInput(ns("weightthreshold"), "Edge weight cutoff", value = 0, min = 0, step = 0.1),
-    shiny::conditionalPanel(
-      condition = sprintf("input['%s']", ns("run_permutations")),
-      shiny::helpText("Locked at 0 while running permutations -- the FDR calculation needs",
-                       "the full, unthresholded network to compare against. Apply a cutoff",
-                       "from the FDR result on the Network Diagnostics tab instead.")
-    ),
-    shiny::checkboxInput(ns("normalize"), "Normalize edge weights", value = TRUE),
-    shiny::conditionalPanel(
-      condition = sprintf("input['%s']", ns("run_permutations")),
-      shiny::helpText("Locked off while running permutations -- normalizing rescales each",
-                       "network (real and every permutation) to its own [0, 1] range, which",
-                       "would force every permutation's top edge weight to 1 regardless of",
-                       "its actual signal, invalidating the rank-based FDR comparison.")
-    ),
+    shiny::numericInput(ns("weightthreshold"),
+                         shiny::tagList("Edge weight cutoff", info_tooltip(
+                           "Locked at 0 during permutations -- cutoff is applied afterward, to the FDR result."
+                         )), value = 0, min = 0, step = 0.1),
+    shiny::checkboxInput(ns("normalize"),
+                          shiny::tagList("Normalize edge weights", info_tooltip(
+                            "Locked off during permutations -- it would cap every permutation's top weight at 1."
+                          )), value = TRUE),
     shiny::selectInput(ns("engine"), "Random forest engine", choices = c("randomForest", "ranger"),
                         selected = "randomForest"),
     shiny::textInput(ns("ptm_sep"), "PTM site separator", value = "."),

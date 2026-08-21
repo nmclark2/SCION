@@ -51,7 +51,9 @@ RS.Get.Weight.Matrix <- function(target.matrix, input.matrix, K = "sqrt", nb.tre
   # normalize expression matrix
   target.matrix <- apply(target.matrix, 2, function(x) (x - mean(x, na.rm = TRUE)) / stats::sd(x, na.rm = TRUE))
   input.matrix <- apply(input.matrix, 2, function(x) (x - mean(x, na.rm = TRUE)) / stats::sd(x, na.rm = TRUE))
-  input.matrix <- input.matrix[, !is.na(colSums(input.matrix))]
+  # a zero-variance regulator (constant across this cluster's samples) z-scores to
+  # NaN and is dropped -- it carries no information to predict targets from anyway
+  input.matrix <- input.matrix[, !is.na(colSums(input.matrix)), drop = FALSE]
 
   num.samples <- dim(target.matrix)[1]
   num.targets <- dim(target.matrix)[2]
@@ -59,7 +61,7 @@ RS.Get.Weight.Matrix <- function(target.matrix, input.matrix, K = "sqrt", nb.tre
   target.names <- colnames(target.matrix)
   input.names <- colnames(input.matrix)
 
-  if (is.null(num.inputs) | is.null(num.targets)) {
+  if (is.null(num.inputs) || is.null(num.targets) || num.inputs == 0 || num.targets == 0) {
     return(NULL)
   }
 
@@ -109,6 +111,15 @@ RS.Get.Weight.Matrix <- function(target.matrix, input.matrix, K = "sqrt", nb.tre
   for (nm in names(imList)) {
     tcols <- names(imList[[nm]])
     weight.matrix[nm, tcols] <- imList[[nm]]
+  }
+
+  # %IncMSE can come back NA for every target/regulator pair in a small or
+  # low-variance cluster (not just the single-regulator case guarded against
+  # upstream in infer_network_clustered()) -- min()/max() on an all-NA matrix
+  # would otherwise just warn and return +-Inf. Nothing usable was computed;
+  # say so the same way as the "no targets/no regulators" case above.
+  if (all(is.na(weight.matrix))) {
+    return(NULL)
   }
 
   mynet <- weight.matrix / num.samples

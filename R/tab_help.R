@@ -48,7 +48,9 @@ helpTabUI <- function(id = "help") {
               distribution. Once you've run permutations, the FDR curve and the real-vs-permuted
               weight distribution appear here too, to sanity-check the FDR-based cutoff."),
     shiny::h3("Visualize"),
-    shiny::p("Views either the real network or the FDR-thresholded one. Interactive mode uses
+    shiny::p("Always shows the thresholded network from the Network Diagnostics tab (FDR-based,
+              a manual weight cutoff, or the full real network if neither has been applied there) --
+              adjust the cutoff on that tab rather than switching views here. Interactive mode uses
               visNetwork; for large networks or a publication figure, download the network file and
               import it into Cytoscape instead.")
   )

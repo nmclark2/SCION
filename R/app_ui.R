@@ -42,6 +42,38 @@ app_UI <- function(request) {
          }
          .main-sidebar .checkbox, .main-sidebar .radio {
            margin-top: 0; margin-bottom: 6px;
+         }
+         .scion-tooltip {
+           position: relative;
+           display: inline-block;
+           cursor: help;
+         }
+         .scion-tooltip:hover::after {
+           content: attr(data-tooltip);
+           position: absolute;
+           right: 0;
+           bottom: 135%%;
+           background: #333;
+           color: #fff;
+           padding: 6px 10px;
+           border-radius: 4px;
+           font-size: 12px;
+           font-weight: normal;
+           line-height: 1.4;
+           white-space: normal;
+           width: 160px;
+           z-index: 9999;
+           box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+           pointer-events: none;
+         }
+         .scion-tooltip:hover::before {
+           content: \"\";
+           position: absolute;
+           right: 8px;
+           bottom: 100%%;
+           border: 5px solid transparent;
+           border-top-color: #333;
+           z-index: 9999;
          }",
         SIDEBAR_WIDTH
       )))),
