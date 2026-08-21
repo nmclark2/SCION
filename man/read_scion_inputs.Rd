@@ -9,6 +9,7 @@ read_scion_inputs(
   reg_data_file,
   target_genes_file = NULL,
   reg_genes_file = NULL,
+  gene_list_header = TRUE,
   clustering_data_file = NULL,
   format = c("csv", "gct")
 )
@@ -19,9 +20,16 @@ matrices. CSV: first column = gene names, remaining columns = samples.
 GCT: a GCT(x) file, read via \code{cmapR::parse_gctx()} (requires the optional
 \code{cmapR} package -- install with \code{BiocManager::install("cmapR")}).}
 
-\item{target_genes_file, reg_genes_file}{optional path to a CSV listing which
+\item{target_genes_file, reg_genes_file}{optional path to a file listing which
 genes to keep as targets/regulators (first column = gene names). \code{NULL}
 (default) keeps every gene present in the corresponding data file.}
+
+\item{gene_list_header}{whether \code{target_genes_file}/\code{reg_genes_file} have a
+header row. Default \code{TRUE} (matches this package's own tutorial data).
+Set to \code{FALSE} for a plain one-gene-symbol-per-line file with no header
+(e.g. PANOPLY's \code{TF_file} convention) -- with the default \code{TRUE}, such a
+file would silently have its first gene misread as a column header and
+dropped.}
 
 \item{clustering_data_file}{optional path to a CSV clustering matrix (rows =
 genes, columns = samples), used by \code{\link[=cluster_genes]{cluster_genes()}}. Restricted to genes

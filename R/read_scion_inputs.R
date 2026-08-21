@@ -10,9 +10,15 @@
 #'   matrices. CSV: first column = gene names, remaining columns = samples.
 #'   GCT: a GCT(x) file, read via `cmapR::parse_gctx()` (requires the optional
 #'   `cmapR` package -- install with `BiocManager::install("cmapR")`).
-#' @param target_genes_file,reg_genes_file optional path to a CSV listing which
+#' @param target_genes_file,reg_genes_file optional path to a file listing which
 #'   genes to keep as targets/regulators (first column = gene names). `NULL`
 #'   (default) keeps every gene present in the corresponding data file.
+#' @param gene_list_header whether `target_genes_file`/`reg_genes_file` have a
+#'   header row. Default `TRUE` (matches this package's own tutorial data).
+#'   Set to `FALSE` for a plain one-gene-symbol-per-line file with no header
+#'   (e.g. PANOPLY's `TF_file` convention) -- with the default `TRUE`, such a
+#'   file would silently have its first gene misread as a column header and
+#'   dropped.
 #' @param clustering_data_file optional path to a CSV clustering matrix (rows =
 #'   genes, columns = samples), used by [cluster_genes()]. Restricted to genes
 #'   that appear in `target_genes_file` or `reg_genes_file` when those are given.
@@ -25,8 +31,8 @@
 #'   `cluster_data` (or `NULL` if `clustering_data_file` was not given).
 #' @export
 read_scion_inputs <- function(target_data_file, reg_data_file, target_genes_file = NULL,
-                               reg_genes_file = NULL, clustering_data_file = NULL,
-                               format = c("csv", "gct")) {
+                               reg_genes_file = NULL, gene_list_header = TRUE,
+                               clustering_data_file = NULL, format = c("csv", "gct")) {
   format <- match.arg(format)
 
   if (format == "gct") {
@@ -40,8 +46,16 @@ read_scion_inputs <- function(target_data_file, reg_data_file, target_genes_file
     reg_data <- utils::read.csv(reg_data_file, row.names = 1)
   }
 
-  target_genes <- if (!is.null(target_genes_file)) utils::read.csv(target_genes_file, stringsAsFactors = FALSE) else NULL
-  reg_genes <- if (!is.null(reg_genes_file)) utils::read.csv(reg_genes_file, stringsAsFactors = FALSE) else NULL
+  target_genes <- if (!is.null(target_genes_file)) {
+    utils::read.csv(target_genes_file, header = gene_list_header, stringsAsFactors = FALSE)
+  } else {
+    NULL
+  }
+  reg_genes <- if (!is.null(reg_genes_file)) {
+    utils::read.csv(reg_genes_file, header = gene_list_header, stringsAsFactors = FALSE)
+  } else {
+    NULL
+  }
 
   if (!is.null(target_genes)) {
     target_data <- target_data[row.names(target_data) %in% target_genes[, 1], ]

@@ -8,8 +8,8 @@
 #' `reg`, and `cluster_assignment`) has everything [permute_network()] needs to
 #' run permutations against this same network without recomputing clustering.
 #'
-#' @param target_data_file,reg_data_file,target_genes_file,reg_genes_file,format
-#'   passed to [read_scion_inputs()].
+#' @param target_data_file,reg_data_file,target_genes_file,reg_genes_file,
+#'   gene_list_header,format passed to [read_scion_inputs()].
 #' @param clustering_method passed to [cluster_genes()] as `method`: `"none"`
 #'   (default), `"dtw"`, `"ica"`, `"kmeans"`, or `"upload"`.
 #' @param clustering_data_file path to a clustering matrix, required unless
@@ -51,7 +51,7 @@
 #'   `fdr_result$thresholded_network`).
 #' @export
 run_scion <- function(target_data_file, reg_data_file, target_genes_file = NULL,
-                       reg_genes_file = NULL, format = c("csv", "gct"),
+                       reg_genes_file = NULL, gene_list_header = TRUE, format = c("csv", "gct"),
                        clustering_method = c("none", "dtw", "ica", "kmeans", "upload"),
                        clustering_data_file = NULL, clustering_threshold = 0.5,
                        clusters_file = NULL, connect_hubs = TRUE, weightthreshold = 0,
@@ -69,8 +69,9 @@ run_scion <- function(target_data_file, reg_data_file, target_genes_file = NULL,
     set.seed(seed)
   }
 
-  inputs <- read_scion_inputs(target_data_file, reg_data_file, target_genes_file,
-                               reg_genes_file, clustering_data_file, format)
+  inputs <- read_scion_inputs(target_data_file, reg_data_file, target_genes_file = target_genes_file,
+                               reg_genes_file = reg_genes_file, gene_list_header = gene_list_header,
+                               clustering_data_file = clustering_data_file, format = format)
 
   cluster_assignment <- cluster_genes(inputs$cluster_data, method = clustering_method,
                                        threshold = clustering_threshold,

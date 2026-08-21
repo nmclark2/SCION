@@ -9,6 +9,7 @@ run_scion(
   reg_data_file,
   target_genes_file = NULL,
   reg_genes_file = NULL,
+  gene_list_header = TRUE,
   format = c("csv", "gct"),
   clustering_method = c("none", "dtw", "ica", "kmeans", "upload"),
   clustering_data_file = NULL,
@@ -31,7 +32,7 @@ run_scion(
 )
 }
 \arguments{
-\item{target_data_file, reg_data_file, target_genes_file, reg_genes_file, format}{passed to \code{\link[=read_scion_inputs]{read_scion_inputs()}}.}
+\item{target_data_file, reg_data_file, target_genes_file, reg_genes_file, }{gene_list_header,format passed to \code{\link[=read_scion_inputs]{read_scion_inputs()}}.}
 
 \item{clustering_method}{passed to \code{\link[=cluster_genes]{cluster_genes()}} as \code{method}: \code{"none"}
 (default), \code{"dtw"}, \code{"ica"}, \code{"kmeans"}, or \code{"upload"}.}
