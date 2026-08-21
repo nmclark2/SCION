@@ -12,6 +12,22 @@ test_that("permute_network is reproducible regardless of num.cores", {
   expect_identical(perms_1core, perms_3core)
 })
 
+test_that("permute_network works with a clustered assignment that has singleton clusters", {
+  # Regression test: shuffle_matrix() converts target/reg to plain matrices, and
+  # subsetting a matrix to exactly one row without drop = FALSE silently collapses
+  # it to a vector, breaking infer_network_clustered()'s dim() guard with
+  # "missing value where TRUE/FALSE needed" the first time a cluster had one gene.
+  mats <- make_test_matrices(n_targets = 6, n_regs = 4, n_samples = 8)
+  # clusters 2 and 3 are singletons -- exactly the case that broke without drop = FALSE
+  cluster_assignment <- data.frame(clusters = c(1, 1, 1, 1, 2, 3), row.names = rownames(mats$target))
+
+  expect_no_error(
+    permute_network(mats$target, mats$reg, cluster_assignment = cluster_assignment,
+                     n_permutations = 2, num.cores = 1, weightthreshold = 0, normalize = FALSE,
+                     connect_hubs = FALSE, engine = "randomForest", nb.trees = 30, trace = FALSE)
+  )
+})
+
 test_that("shuffle_matrix preserves dimnames and only reorders values", {
   mat <- matrix(1:12, nrow = 3, ncol = 4,
                 dimnames = list(c("g1", "g2", "g3"), c("s1", "s2", "s3", "s4")))

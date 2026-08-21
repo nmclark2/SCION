@@ -44,6 +44,19 @@ test_that("weight_matrix_to_edges drops edges below threshold and orders target-
   expect_equal(edges$Weight, c(0.9, 0.4))
 })
 
+test_that("weight_matrix_to_edges returns a valid 0-row edge table when nothing clears the threshold", {
+  # e.g. weightthreshold = 0 with raw, unnormalized (possibly negative) importances --
+  # the exact scenario permutation testing now always uses. A bare "regulates" scalar
+  # doesn't recycle against zero-length columns in data.frame(), so this used to error
+  # with "arguments imply differing number of rows: 0, 1".
+  network <- matrix(c(-0.1, -0.2, -0.3, -0.4), nrow = 2, byrow = TRUE,
+                     dimnames = list(c("t1", "t2"), c("r1", "r2")))
+  edges <- weight_matrix_to_edges(network, weightthreshold = 0)
+
+  expect_equal(nrow(edges), 0)
+  expect_equal(names(edges), c("Regulator", "Interaction", "Target", "Weight"))
+})
+
 test_that("pick_hub_genes returns all tied max-out-degree regulators", {
   edges <- data.frame(Regulator = c("a", "a", "b", "b"), stringsAsFactors = FALSE)
   expect_setequal(pick_hub_genes(edges), c("a", "b"))

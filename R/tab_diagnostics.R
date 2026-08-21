@@ -72,32 +72,108 @@ diagnosticsTabServer <- function(id = "diagnostics", network_result) {
         ),
         shinydashboardPlus::box(
           title = "Result", width = 12, status = "primary", solidHeader = TRUE, headerBorder = TRUE,
+          shiny::fluidRow(
+            shiny::column(
+              5,
+              shiny::numericInput(ns("target_fdr"), "Target FDR", value = 0.05, min = 0, max = 1, step = 0.01),
+              shiny::actionButton(ns("recompute_fdr"), "Recompute at this FDR", icon = shiny::icon("rotate"))
+            ),
+            shiny::column(
+              5,
+              shiny::numericInput(ns("manual_threshold"), "...or apply a flat weight cutoff instead",
+                                   value = NA, min = 0, step = 0.01),
+              shiny::actionButton(ns("apply_manual_threshold"), "Apply cutoff", icon = shiny::icon("filter"))
+            ),
+            shiny::column(
+              2,
+              shiny::br(),
+              shiny::actionLink(ns("clear_override"), "Reset to default FDR")
+            )
+          ),
+          shiny::hr(),
           shiny::uiOutput(ns("summary")),
           shiny::downloadButton(ns("download_thresholded"), "Download thresholded network")
         )
       )
     })
 
+    # The permutation results (network_result()$permuted_networks) never need
+    # to be recomputed here -- compute_fdr_threshold() is pure rank/p-value math
+    # over already-inferred weights, and a flat cutoff is just a data frame
+    # filter. Both are effectively free, so "recompute" never re-runs any
+    # random forest inference.
+    fdr_override <- shiny::reactiveVal(NULL)
+    manual_threshold <- shiny::reactiveVal(NULL)
+
+    shiny::observeEvent(network_result(), {
+      fdr_override(NULL)
+      manual_threshold(NULL)
+      res <- network_result()
+      if (!is.null(res$fdr_result)) {
+        shiny::updateNumericInput(session, "target_fdr", value = res$fdr_result$target_fdr)
+      }
+    })
+
+    shiny::observeEvent(input$recompute_fdr, {
+      res <- network_result()
+      shiny::req(res$fdr_result)
+      fdr_override(compute_fdr_threshold(res$network, res$permuted_networks, target_fdr = input$target_fdr))
+      manual_threshold(NULL)
+    })
+
+    shiny::observeEvent(input$apply_manual_threshold, {
+      shiny::req(!is.na(input$manual_threshold))
+      manual_threshold(input$manual_threshold)
+    })
+
+    shiny::observeEvent(input$clear_override, {
+      fdr_override(NULL)
+      manual_threshold(NULL)
+    })
+
+    # single source of truth for the plots/summary/download -- a flat cutoff
+    # (if applied) always takes precedence over whichever FDR result (default
+    # or recomputed) is currently active, but keeps that FDR result's curve/
+    # permuted weights so the FDR plots still show the full picture.
+    display_fdr <- shiny::reactive({
+      base <- if (!is.null(fdr_override())) fdr_override() else network_result()$fdr_result
+      if (is.null(base)) {
+        return(NULL)
+      }
+      mt <- manual_threshold()
+      if (!is.null(mt)) {
+        base$threshold <- mt
+        base$thresholded_network <- network_result()$network[network_result()$network$Weight >= mt, , drop = FALSE]
+      }
+      base
+    })
+
     output$fdr_curve <- shiny::renderPlot({
-      fdr <- network_result()$fdr_result
-      shiny::validate(shiny::need(fdr, "No permutation results yet."))
-      plot_fdr_curve(fdr, type = "curve")
+      shiny::validate(shiny::need(network_result()$fdr_result, "No permutation results yet."))
+      plot_fdr_curve(display_fdr(), type = "curve")
     })
 
     output$weight_comparison <- shiny::renderPlot({
-      fdr <- network_result()$fdr_result
-      shiny::validate(shiny::need(fdr, "No permutation results yet."))
-      plot_fdr_curve(fdr, type = "weight_comparison")
+      shiny::validate(shiny::need(network_result()$fdr_result, "No permutation results yet."))
+      plot_fdr_curve(display_fdr(), type = "weight_comparison")
     })
 
     output$summary <- shiny::renderUI({
       res <- network_result()
-      fdr <- res$fdr_result
-      if (is.null(fdr)) {
+      if (is.null(res$fdr_result)) {
         return(NULL)
       }
+      fdr <- display_fdr()
+      basis <- if (!is.null(manual_threshold())) {
+        "manual cutoff"
+      } else if (!is.null(fdr_override())) {
+        sprintf("FDR < %s", fdr$target_fdr)
+      } else {
+        sprintf("default FDR < %s", fdr$target_fdr)
+      }
       shiny::tagList(
-        shiny::strong(sprintf("Threshold: %s", if (is.na(fdr$threshold)) "not reached" else signif(fdr$threshold, 4))),
+        shiny::strong(sprintf("Threshold: %s (%s)",
+                               if (is.na(fdr$threshold)) "not reached" else signif(fdr$threshold, 4), basis)),
         shiny::p(sprintf("%d of %d edges kept", nrow(fdr$thresholded_network), nrow(res$network)))
       )
     })
@@ -105,15 +181,12 @@ diagnosticsTabServer <- function(id = "diagnostics", network_result) {
     output$download_thresholded <- shiny::downloadHandler(
       filename = function() "thresholded_network.tsv",
       content = function(file) {
-        fdr <- network_result()$fdr_result
+        fdr <- display_fdr()
         shiny::req(fdr)
         write_scion_network(fdr$thresholded_network, file)
       }
     )
 
-    shiny::reactive({
-      res <- network_result()
-      if (!is.null(res)) res$fdr_result else NULL
-    })
+    display_fdr
   })
 }

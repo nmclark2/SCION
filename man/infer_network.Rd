@@ -41,9 +41,11 @@ produced any network this one will be compared against (see
 \code{\link[=RS.Get.Weight.Matrix]{RS.Get.Weight.Matrix()}} and \code{\link[=compute_fdr_threshold]{compute_fdr_threshold()}}).}
 
 \item{ptm_sep}{separator used to split a PTM-site regulator name into gene
-symbol + site (e.g. \code{"."} for \code{SOX2.S35}, \code{"_"} for \code{MEF2C_S453s}). Only
-used when connecting cluster hubs and no hub gene is directly present in
-\code{target_data}'s row names.}
+symbol + site (e.g. \code{"."} for \code{SOX2.S35}, \code{"_"} for \code{MEF2C_S453s}): when
+connecting cluster hubs and no hub gene is directly present in
+\code{target_data}'s row names, and always in the returned edge table (see
+\code{\link[=split_ptm_sites]{split_ptm_sites()}}) so a PTM-annotated regulator and its plain-symbol
+target are recognized as the same gene.}
 
 \item{seed}{optional RNG seed set once, at the very start of this call
 (before clustering-aware seed draws or any inference). Without it, the

@@ -42,35 +42,38 @@ cluster_genes <- function(clustering_data = NULL, method = c("none", "dtw", "ica
     return(NULL)
   }
 
-  if (method == "upload") {
+  message("SCION_STAGE: clustering started")
+
+  result <- if (method == "upload") {
     clusters <- utils::read.csv(clusters_file, row.names = 1)
     rownames(clusters) <- make.names(rownames(clusters))
-    return(clusters)
-  }
-
-  if (is.null(clustering_data)) {
-    if (is.null(target_data) || is.null(reg_data)) {
-      stop("clustering_data was not supplied, and target_data/reg_data are required to derive ",
-           "it automatically for method = '", method, "'.")
+    clusters
+  } else {
+    if (is.null(clustering_data)) {
+      if (is.null(target_data) || is.null(reg_data)) {
+        stop("clustering_data was not supplied, and target_data/reg_data are required to derive ",
+             "it automatically for method = '", method, "'.")
+      }
+      message("No clustering_data supplied; combining target_data and reg_data for clustering.")
+      target_data <- as.data.frame(target_data)
+      reg_data <- as.data.frame(reg_data)
+      target_only <- target_data[!rownames(target_data) %in% rownames(reg_data), , drop = FALSE]
+      clustering_data <- rbind(reg_data, target_only)
     }
-    message("No clustering_data supplied; combining target_data and reg_data for clustering.")
-    target_data <- as.data.frame(target_data)
-    reg_data <- as.data.frame(reg_data)
-    target_only <- target_data[!rownames(target_data) %in% rownames(reg_data), , drop = FALSE]
-    clustering_data <- rbind(reg_data, target_only)
+
+    if (method == "dtw") {
+      dtw_clustering(clustering_data, threshold)
+    } else if (method == "ica") {
+      ica_clustering(clustering_data, threshold)
+    } else {
+      # kmeans: scale starting k based on the smallest dimension of the regulator matrix
+      dims_source <- if (!is.null(reg_data)) reg_data else clustering_data
+      kmid <- min(dim(dims_source)[1], dim(dims_source)[2])
+      kmid <- ifelse(kmid < 20, 20, kmid) # if kmid < 20, change to 20 for a better starting number
+      kmeans_clustering(clustering_data, kmid)
+    }
   }
 
-  if (method == "dtw") {
-    return(dtw_clustering(clustering_data, threshold))
-  }
-
-  if (method == "ica") {
-    return(ica_clustering(clustering_data, threshold))
-  }
-
-  # kmeans: scale starting k based on the smallest dimension of the regulator matrix
-  dims_source <- if (!is.null(reg_data)) reg_data else clustering_data
-  kmid <- min(dim(dims_source)[1], dim(dims_source)[2])
-  kmid <- ifelse(kmid < 20, 20, kmid) # if kmid < 20, change to 20 for a better starting number
-  kmeans_clustering(clustering_data, kmid)
+  message("SCION_STAGE: clustering complete")
+  result
 }

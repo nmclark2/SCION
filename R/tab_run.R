@@ -14,11 +14,7 @@ runSidebarUI <- function(id = "run") {
     shiny::actionButton(ns("load_example"), "Load example data (Arabidopsis)",
                          icon = shiny::icon("flask"), class = "btn-default"),
     shiny::hr(),
-    shiny::fileInput(ns("target_data_file"), "Target matrix", accept = c(".csv", ".gct")),
-    shiny::fileInput(ns("reg_data_file"), "Regulator matrix", accept = c(".csv", ".gct")),
-    shiny::fileInput(ns("target_genes_file"), "Target gene list (optional)"),
-    shiny::fileInput(ns("reg_genes_file"), "Regulator gene list (optional)"),
-    shiny::checkboxInput(ns("gene_list_header"), "Gene lists have a header row", value = TRUE),
+    shiny::uiOutput(ns("data_inputs")),
     shiny::selectInput(ns("clustering_method"), "Clustering",
                         choices = c("None" = "none", "Temporal (DTW)" = "dtw",
                                     "Non-temporal (ICA)" = "ica", "Non-temporal (k-means)" = "kmeans",
@@ -27,8 +23,7 @@ runSidebarUI <- function(id = "run") {
     shiny::conditionalPanel(
       condition = sprintf("input['%s'] != 'none' && input['%s'] != 'upload'",
                            ns("clustering_method"), ns("clustering_method")),
-      shiny::fileInput(ns("clustering_data_file"),
-                        "Clustering matrix (optional -- defaults to the combined target + regulator data)"),
+      shiny::uiOutput(ns("clustering_data_input")),
       shiny::numericInput(ns("clustering_threshold"), "Clustering threshold", value = 0.5, min = 0, step = 0.1)
     ),
     shiny::conditionalPanel(
@@ -37,7 +32,20 @@ runSidebarUI <- function(id = "run") {
     ),
     shiny::checkboxInput(ns("connect_hubs"), "Connect cluster hubs", value = TRUE),
     shiny::numericInput(ns("weightthreshold"), "Edge weight cutoff", value = 0, min = 0, step = 0.1),
+    shiny::conditionalPanel(
+      condition = sprintf("input['%s']", ns("run_permutations")),
+      shiny::helpText("Locked at 0 while running permutations -- the FDR calculation needs",
+                       "the full, unthresholded network to compare against. Apply a cutoff",
+                       "from the FDR result on the Network Diagnostics tab instead.")
+    ),
     shiny::checkboxInput(ns("normalize"), "Normalize edge weights", value = TRUE),
+    shiny::conditionalPanel(
+      condition = sprintf("input['%s']", ns("run_permutations")),
+      shiny::helpText("Locked off while running permutations -- normalizing rescales each",
+                       "network (real and every permutation) to its own [0, 1] range, which",
+                       "would force every permutation's top edge weight to 1 regardless of",
+                       "its actual signal, invalidating the rank-based FDR comparison.")
+    ),
     shiny::selectInput(ns("engine"), "Random forest engine", choices = c("randomForest", "ranger"),
                         selected = "randomForest"),
     shiny::textInput(ns("ptm_sep"), "PTM site separator", value = "."),
@@ -64,19 +72,69 @@ runSidebarUI <- function(id = "run") {
 #' @noRd
 runSidebarServer <- function(id = "run", parent_session) {
   shiny::moduleServer(id, function(input, output, session) {
+    ns <- session$ns
     network_result <- shiny::reactiveVal(NULL)
+    using_example_data <- shiny::reactiveVal(FALSE)
 
-    # shared by both the "Run network" button and "Load example data": runs
+    # run_scion() (and cluster_genes()/permute_network()) emit
+    # "SCION_STAGE: <stage>" messages at the start/end of each major phase.
+    # Maps each to a progress-bar position/label; stages that don't run for a
+    # given call (e.g. no clustering, no permutations) are simply skipped over.
+    # Permutation testing additionally emits "permutation testing progress
+    # <done>/<total>" as each permutation (or, when parallelized, each worker-
+    # sized batch) finishes -- handled separately below so the bar actually
+    # advances across that whole phase instead of sitting at 0.65 until done.
+    stage_progress <- list(
+      "clustering started" = list(value = 0.05, detail = "Clustering..."),
+      "clustering complete" = list(value = 0.3, detail = "Clustering complete"),
+      "network inference started" = list(value = 0.35, detail = "Inferring network..."),
+      "network inference complete" = list(value = 0.6, detail = "Network inference complete"),
+      "permutation testing started" = list(value = 0.65, detail = "Running permutations..."),
+      "permutation testing complete" = list(value = 0.95, detail = "Permutations complete")
+    )
+    permutation_progress_pattern <- "^permutation testing progress (\\d+)/(\\d+)$"
+
+    # shared by both the "Run network" button and the example-data path: runs
     # run_scion() with whatever args it's given, reports the result, and
-    # auto-navigates to Network Diagnostics.
+    # auto-navigates to Network Diagnostics. trace = FALSE always -- otherwise
+    # RS.Get.Weight.Matrix() prints one message per target gene, which floods
+    # the console/logs for anything beyond a handful of genes. Other,
+    # non-stage messages (e.g. "No clustering_data supplied...") are left
+    # alone and just print normally.
     run_and_report <- function(args) {
-      shiny::withProgress(message = "Running SCION...", value = 0.3, {
-        result <- tryCatch(do.call(run_scion, args), error = function(e) {
-          shiny::showNotification(paste("SCION run failed:", conditionMessage(e)),
-                                   type = "error", duration = NULL)
-          NULL
-        })
+      args$trace <- FALSE
+      shiny::withProgress(message = "Running SCION...", value = 0, {
+        handle_stage_message <- function(m) {
+          txt <- trimws(conditionMessage(m))
+          if (startsWith(txt, "SCION_STAGE: ")) {
+            stage <- sub("^SCION_STAGE: ", "", txt)
+            progress_match <- regmatches(stage, regexec(permutation_progress_pattern, stage))[[1]]
+            if (length(progress_match) == 3) {
+              done <- as.integer(progress_match[2])
+              total <- as.integer(progress_match[3])
+              shiny::setProgress(value = 0.65 + 0.3 * (done / total),
+                                  detail = sprintf("Running permutations... (%d/%d)", done, total))
+            } else {
+              info <- stage_progress[[stage]]
+              if (!is.null(info)) {
+                shiny::setProgress(value = info$value, detail = info$detail)
+              }
+            }
+            invokeRestart("muffleMessage")
+          }
+        }
+
+        result <- withCallingHandlers(
+          tryCatch(do.call(run_scion, args), error = function(e) {
+            shiny::showNotification(paste("SCION run failed:", conditionMessage(e)),
+                                     type = "error", duration = NULL)
+            NULL
+          }),
+          message = handle_stage_message
+        )
+
         if (!is.null(result)) {
+          shiny::setProgress(value = 1, detail = "Done")
           network_result(result)
           msg <- sprintf("Network inferred: %d edges.", nrow(result$network))
           if (isTRUE(args$permute)) {
@@ -90,15 +148,128 @@ runSidebarServer <- function(id = "run", parent_session) {
       })
     }
 
+    # "Load example data" only pre-fills parameters -- it does NOT run
+    # anything. The user reviews/adjusts them, then clicks "Run network"
+    # themselves, same as with their own uploaded files. Mirrors the settings
+    # documented in the README/tutorial for this dataset: edge cutoff 0.33,
+    # temporal (DTW) clustering with the bundled clustering matrix.
+    shiny::observeEvent(input$load_example, {
+      using_example_data(TRUE)
+      shiny::updateCheckboxInput(session, "gene_list_header", value = TRUE)
+      shiny::updateSelectInput(session, "clustering_method", selected = "dtw")
+      # skip these two when permutations are already on -- that lock keeps them at 0/FALSE
+      if (!isTRUE(input$run_permutations)) {
+        shiny::updateNumericInput(session, "weightthreshold", value = 0.33)
+        shiny::updateCheckboxInput(session, "normalize", value = TRUE)
+      }
+      shiny::updateCheckboxInput(session, "connect_hubs", value = TRUE)
+      shiny::updateSelectInput(session, "engine", selected = "randomForest")
+      shiny::updateTextInput(session, "ptm_sep", value = ".")
+      shiny::updateNumericInput(session, "seed", value = 2020)
+      shiny::showNotification(
+        "Example data selected -- review the parameters below, then click \"Run network\".",
+        type = "message", duration = 8
+      )
+    })
+
+    shiny::observeEvent(input$clear_example, using_example_data(FALSE))
+
+    # Permutation testing needs the full, unthresholded, unnormalized network
+    # to compare against -- a manual weight cutoff would bias which edges get
+    # compared, and per-network normalization would force every permutation's
+    # top edge weight to 1 regardless of signal (see compute_fdr_threshold()).
+    # Lock both off for the duration, restoring whatever the user had set when
+    # they turn permutations back off.
+    weightthreshold_before_permute <- shiny::reactiveVal(0)
+    normalize_before_permute <- shiny::reactiveVal(TRUE)
+    shiny::observeEvent(input$run_permutations, {
+      if (isTRUE(input$run_permutations)) {
+        weightthreshold_before_permute(input$weightthreshold)
+        normalize_before_permute(input$normalize)
+        shiny::updateNumericInput(session, "weightthreshold", value = 0)
+        shiny::updateCheckboxInput(session, "normalize", value = FALSE)
+        shinyjs::disable("weightthreshold")
+        shinyjs::disable("normalize")
+      } else {
+        shinyjs::enable("weightthreshold")
+        shinyjs::enable("normalize")
+        shiny::updateNumericInput(session, "weightthreshold", value = weightthreshold_before_permute())
+        shiny::updateCheckboxInput(session, "normalize", value = normalize_before_permute())
+      }
+    }, ignoreInit = TRUE)
+
+    # uploading your own file stops using the example data
+    shiny::observeEvent(input$target_data_file, using_example_data(FALSE), ignoreInit = TRUE)
+    shiny::observeEvent(input$reg_data_file, using_example_data(FALSE), ignoreInit = TRUE)
+
+    output$data_inputs <- shiny::renderUI({
+      if (isTRUE(using_example_data())) {
+        reg_type <- input$example_regulator_type
+        shiny::div(
+          class = "well", style = "padding: 10px 12px; color: #333;",
+          shiny::tags$strong(shiny::icon("circle-check"), " Using bundled Arabidopsis example data"),
+          shiny::tags$ul(
+            style = "padding-left: 18px; margin: 6px 0; color: #333;",
+            shiny::tags$li("Target matrix: target_mat_RNA.csv"),
+            shiny::tags$li(sprintf("Regulator matrix: reg_mat_%s.csv", reg_type)),
+            shiny::tags$li("Target gene list: target_list_RNA.csv"),
+            shiny::tags$li(sprintf("Regulator gene list: reg_list_%s.csv", reg_type))
+          ),
+          shiny::actionButton(ns("clear_example"), "Use my own data instead",
+                               icon = shiny::icon("rotate-left"), class = "btn-xs btn-default",
+                               style = "margin-top: 4px;")
+        )
+      } else {
+        shiny::tagList(
+          shiny::fileInput(ns("target_data_file"), "Target matrix", accept = c(".csv", ".gct")),
+          shiny::fileInput(ns("reg_data_file"), "Regulator matrix", accept = c(".csv", ".gct")),
+          shiny::fileInput(ns("target_genes_file"), "Target gene list (optional)"),
+          shiny::fileInput(ns("reg_genes_file"), "Regulator gene list (optional)"),
+          shiny::checkboxInput(ns("gene_list_header"), "Gene lists have a header row", value = TRUE)
+        )
+      }
+    })
+
+    output$clustering_data_input <- shiny::renderUI({
+      if (isTRUE(using_example_data())) {
+        shiny::helpText(sprintf("Using bundled clustering matrix: cluster_mat_%s.csv",
+                                 input$example_regulator_type))
+      } else {
+        shiny::fileInput(ns("clustering_data_file"),
+                          "Clustering matrix (optional -- defaults to the combined target + regulator data)")
+      }
+    })
+
     shiny::observeEvent(input$run, {
-      shiny::req(input$target_data_file, input$reg_data_file)
+      if (isTRUE(using_example_data())) {
+        example_dir <- system.file("extdata", "arabidopsis", package = "SCION")
+        shiny::validate(shiny::need(nzchar(example_dir), "Example data not found in the installed package."))
+        reg_type <- input$example_regulator_type
+        target_data_file <- file.path(example_dir, "target_mat_RNA.csv")
+        reg_data_file <- file.path(example_dir, sprintf("reg_mat_%s.csv", reg_type))
+        target_genes_file <- file.path(example_dir, "target_list_RNA.csv")
+        reg_genes_file <- file.path(example_dir, sprintf("reg_list_%s.csv", reg_type))
+        clustering_data_file <- if (input$clustering_method %in% c("dtw", "ica", "kmeans")) {
+          file.path(example_dir, sprintf("cluster_mat_%s.csv", reg_type))
+        }
+        gene_list_header <- TRUE
+      } else {
+        shiny::req(input$target_data_file, input$reg_data_file)
+        target_data_file <- input$target_data_file$datapath
+        reg_data_file <- input$reg_data_file$datapath
+        target_genes_file <- if (!is.null(input$target_genes_file)) input$target_genes_file$datapath
+        reg_genes_file <- if (!is.null(input$reg_genes_file)) input$reg_genes_file$datapath
+        clustering_data_file <- if (!is.null(input$clustering_data_file)) input$clustering_data_file$datapath
+        gene_list_header <- input$gene_list_header
+      }
+
       run_and_report(list(
-        target_data_file = input$target_data_file$datapath,
-        reg_data_file = input$reg_data_file$datapath,
-        target_genes_file = if (!is.null(input$target_genes_file)) input$target_genes_file$datapath,
-        reg_genes_file = if (!is.null(input$reg_genes_file)) input$reg_genes_file$datapath,
-        gene_list_header = input$gene_list_header,
-        clustering_data_file = if (!is.null(input$clustering_data_file)) input$clustering_data_file$datapath,
+        target_data_file = target_data_file,
+        reg_data_file = reg_data_file,
+        target_genes_file = target_genes_file,
+        reg_genes_file = reg_genes_file,
+        gene_list_header = gene_list_header,
+        clustering_data_file = clustering_data_file,
         clustering_method = input$clustering_method,
         clustering_threshold = input$clustering_threshold,
         clusters_file = if (!is.null(input$clusters_file)) input$clusters_file$datapath,
@@ -117,32 +288,10 @@ runSidebarServer <- function(id = "run", parent_session) {
       ))
     })
 
-    shiny::observeEvent(input$load_example, {
-      example_dir <- system.file("extdata", "arabidopsis", package = "SCION")
-      shiny::validate(shiny::need(nzchar(example_dir), "Example data not found in the installed package."))
-      reg_type <- input$example_regulator_type
-      run_and_report(list(
-        target_data_file = file.path(example_dir, "target_mat_RNA.csv"),
-        reg_data_file = file.path(example_dir, sprintf("reg_mat_%s.csv", reg_type)),
-        target_genes_file = file.path(example_dir, "target_list_RNA.csv"),
-        reg_genes_file = file.path(example_dir, sprintf("reg_list_%s.csv", reg_type)),
-        gene_list_header = TRUE,
-        clustering_method = "none", # kept fast for a demo; DTW in particular is O(n^2) on ~1100 genes
-        connect_hubs = TRUE,
-        weightthreshold = 0.33, # matches the published tutorial's documented default
-        normalize = TRUE,
-        num.cores = input$num_cores,
-        engine = "randomForest",
-        seed = 2020,
-        permute = FALSE
-      ))
-    })
-
     output$status <- shiny::renderUI({
       res <- network_result()
       if (is.null(res)) {
-        return(shiny::helpText("No network yet -- upload files and click Run network,",
-                                "or click \"Load example data\"."))
+        return(NULL)
       }
       shiny::tagList(
         shiny::strong(sprintf("%d edges", nrow(res$network))),

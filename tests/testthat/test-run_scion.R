@@ -28,6 +28,58 @@ test_that("run_scion(permute = TRUE) runs the real network, permutations, and FD
   }
 })
 
+test_that("run_scion(permute = TRUE, normalize = TRUE) warns and overrides to normalize = FALSE", {
+  skip_on_cran()
+  mats <- make_test_matrices()
+  tmp_dir <- tempfile("scion-test-")
+  dir.create(tmp_dir)
+  on.exit(unlink(tmp_dir, recursive = TRUE), add = TRUE)
+  files <- write_test_csvs(mats, tmp_dir)
+
+  expect_warning(
+    result <- run_scion(files$target_file, files$reg_file, weightthreshold = 0, normalize = TRUE,
+                         num.cores = 1, engine = "randomForest", seed = 1, permute = TRUE,
+                         n_permutations = 3, base_seed = 0, target_fdr = 0.05,
+                         nb.trees = 50, trace = FALSE),
+    "invalidate the rank-based FDR comparison"
+  )
+  expect_false(result$params$normalize)
+
+  # should now behave identically to explicitly passing normalize = FALSE
+  reference <- run_scion(files$target_file, files$reg_file, weightthreshold = 0, normalize = FALSE,
+                          num.cores = 1, engine = "randomForest", seed = 1, permute = TRUE,
+                          n_permutations = 3, base_seed = 0, target_fdr = 0.05,
+                          nb.trees = 50, trace = FALSE)
+  expect_identical(result$network, reference$network)
+  expect_identical(result$permuted_networks, reference$permuted_networks)
+})
+
+test_that("run_scion(permute = TRUE, weightthreshold != 0) warns and overrides to weightthreshold = 0", {
+  skip_on_cran()
+  mats <- make_test_matrices()
+  tmp_dir <- tempfile("scion-test-")
+  dir.create(tmp_dir)
+  on.exit(unlink(tmp_dir, recursive = TRUE), add = TRUE)
+  files <- write_test_csvs(mats, tmp_dir)
+
+  expect_warning(
+    result <- run_scion(files$target_file, files$reg_file, weightthreshold = 0.2, normalize = FALSE,
+                         num.cores = 1, engine = "randomForest", seed = 1, permute = TRUE,
+                         n_permutations = 3, base_seed = 0, target_fdr = 0.05,
+                         nb.trees = 50, trace = FALSE),
+    "biasing which edges"
+  )
+  expect_equal(result$params$weightthreshold, 0)
+
+  # should now behave identically to explicitly passing weightthreshold = 0
+  reference <- run_scion(files$target_file, files$reg_file, weightthreshold = 0, normalize = FALSE,
+                          num.cores = 1, engine = "randomForest", seed = 1, permute = TRUE,
+                          n_permutations = 3, base_seed = 0, target_fdr = 0.05,
+                          nb.trees = 50, trace = FALSE)
+  expect_identical(result$network, reference$network)
+  expect_identical(result$permuted_networks, reference$permuted_networks)
+})
+
 test_that("run_scion(permute = TRUE)'s permutations match a standalone permute_network() call", {
   skip_on_cran()
   mats <- make_test_matrices()

@@ -7,12 +7,14 @@ helpTabUI <- function(id = "help") {
   shiny::tagList(
     shiny::h3("Run network (sidebar)"),
     shiny::strong("Load example data"),
-    shiny::p("Runs a real Arabidopsis network (from Clark, Nolan, Wang et al., Nat Commun 12,
-              5858 (2021)) with sensible pre-set parameters -- a quick way to see the app
-              working end-to-end before uploading your own data. Choose \"Example regulator
-              type\" for a protein-level network (transcription factors) or a
+    shiny::p("Runs a real Arabidopsis network (from Zander, Lewsey, Clark et al., Nature Plants
+              6, 290-302 (2020)) with the parameters used in the README/tutorial -- a quick way
+              to see the app working end-to-end before uploading your own data. Choose \"Example
+              regulator type\" for a protein-level network (transcription factors) or a
               phosphoproteome-level one (TFs with PTM sites); both pair with the same RNA
-              target data."),
+              target data and their own bundled clustering matrix, used with temporal (DTW)
+              clustering (switched on for this example, since a pre-computed clustering file
+              is included)."),
     shiny::strong("Target / Regulator matrix"),
     shiny::p("Data matrices for your gene targets (e.g. transcript data) and regulators (e.g. protein
               data). Rows are genes, columns are samples. CSV or GCT format. If your regulators contain

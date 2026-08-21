@@ -17,8 +17,15 @@
 #' @param clustering_threshold passed to [cluster_genes()] as `threshold`.
 #' @param clusters_file passed to [cluster_genes()] as `clusters_file`, required
 #'   when `clustering_method = "upload"`.
-#' @param connect_hubs,weightthreshold,normalize,num.cores,engine,ptm_sep passed
-#'   to [infer_network()].
+#' @param connect_hubs,num.cores,engine,ptm_sep passed to [infer_network()].
+#' @param weightthreshold passed to [infer_network()]. Forced to `0` (with a warning) whenever
+#'   `permute = TRUE`, regardless of what's passed -- the FDR comparison needs the full,
+#'   unthresholded network on both sides; apply a cutoff to the result afterward instead (see
+#'   [compute_fdr_threshold()]).
+#' @param normalize passed to [infer_network()]. Forced to `FALSE` (with a warning) whenever
+#'   `permute = TRUE`, regardless of what's passed -- normalizing rescales each network (real
+#'   and every permutation) independently to `[0, 1]`, which would force every permutation's
+#'   top edge weight to exactly 1 and invalidate the rank-based FDR comparison.
 #' @param seed RNG seed set once, before clustering and inference, so the same
 #'   inputs produce the same network every run. Default matches the legacy
 #'   `SCION()` behavior. Set to `NULL` to skip seeding.
@@ -65,6 +72,24 @@ run_scion <- function(target_data_file, reg_data_file, target_genes_file = NULL,
   engine <- match.arg(engine)
   permute_dim <- match.arg(permute_dim)
 
+  if (permute && isTRUE(normalize)) {
+    warning("normalize = TRUE rescales each network (real and every permutation) to its own ",
+            "[0, 1] range, which would force every permutation's top edge weight to 1 ",
+            "regardless of its actual signal and invalidate the rank-based FDR comparison in ",
+            "compute_fdr_threshold(). Running with normalize = FALSE for both the real network ",
+            "and its permutations instead.", call. = FALSE)
+    normalize <- FALSE
+  }
+
+  if (permute && !identical(weightthreshold, 0)) {
+    warning("weightthreshold != 0 would apply the same manual cutoff to the real network and ",
+            "every permutation BEFORE the FDR comparison, biasing which edges compute_fdr_",
+            "threshold() ever gets to compare. Running with weightthreshold = 0 for both the ",
+            "real network and its permutations instead -- apply a cutoff to the result ",
+            "afterward via compute_fdr_threshold() or a manual filter.", call. = FALSE)
+    weightthreshold <- 0
+  }
+
   if (!is.null(seed)) {
     set.seed(seed)
   }
@@ -77,10 +102,12 @@ run_scion <- function(target_data_file, reg_data_file, target_genes_file = NULL,
                                        threshold = clustering_threshold, clusters_file = clusters_file,
                                        target_data = inputs$target, reg_data = inputs$reg)
 
+  message("SCION_STAGE: network inference started")
   network <- infer_network(inputs$target, inputs$reg, cluster_assignment = cluster_assignment,
                             weightthreshold = weightthreshold, normalize = normalize,
                             connect_hubs = connect_hubs, num.cores = num.cores, engine = engine,
                             ptm_sep = ptm_sep, ...)
+  message("SCION_STAGE: network inference complete")
 
   result <- list(network = network, target = inputs$target, reg = inputs$reg,
                   cluster_assignment = cluster_assignment,

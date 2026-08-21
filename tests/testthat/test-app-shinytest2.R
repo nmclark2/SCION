@@ -81,7 +81,55 @@ test_that("Shiny app: sidebar's 'Run permutations' checkbox populates the Networ
   expect_match(summary_html, "Threshold")
 })
 
-test_that("Shiny app: 'Load example data' runs the bundled Arabidopsis network end-to-end", {
+test_that("Shiny app: 'Load example data' only pre-fills parameters, does not auto-run", {
+  skip_on_cran()
+  skip_if_not_installed("shinytest2")
+  skip_if_not_installed("chromote")
+
+  app_dir <- tempfile("scion-app-")
+  dir.create(app_dir)
+  writeLines("SCION::launchApp()", file.path(app_dir, "app.R"))
+
+  app <- shinytest2::AppDriver$new(app_dir, name = "scion-smoke-example-data-noautorun", height = 900,
+                                    width = 1400, load_timeout = 30000)
+  on.exit(app$stop(), add = TRUE)
+
+  app$click("run-load_example", wait_ = FALSE)
+  app$wait_for_idle(timeout = 10000)
+
+  # parameters got pre-filled, including clustering (a clustering file is bundled)...
+  expect_equal(app$get_value(input = "run-weightthreshold"), 0.33)
+  expect_equal(app$get_value(input = "run-clustering_method"), "dtw")
+  # ...but nothing has actually run, and we're still on the default Help tab
+  expect_equal(app$get_value(input = "navbar-tabs"), "help")
+  expect_no_match(app$get_html("#run-status"), "edges")
+})
+
+test_that("Shiny app: 'Use my own data instead' reverts the example-data summary back to file inputs", {
+  skip_on_cran()
+  skip_if_not_installed("shinytest2")
+  skip_if_not_installed("chromote")
+
+  app_dir <- tempfile("scion-app-")
+  dir.create(app_dir)
+  writeLines("SCION::launchApp()", file.path(app_dir, "app.R"))
+
+  app <- shinytest2::AppDriver$new(app_dir, name = "scion-smoke-clear-example", height = 900,
+                                    width = 1400, load_timeout = 30000)
+  on.exit(app$stop(), add = TRUE)
+
+  app$click("run-load_example", wait_ = FALSE)
+  app$wait_for_idle(timeout = 10000)
+  expect_match(app$get_html("#run-data_inputs"), "Using bundled Arabidopsis example data")
+
+  app$click("run-clear_example", wait_ = FALSE)
+  app$wait_for_idle(timeout = 10000)
+  data_inputs_html <- app$get_html("#run-data_inputs")
+  expect_no_match(data_inputs_html, "Using bundled Arabidopsis example data")
+  expect_match(data_inputs_html, "Target matrix")
+})
+
+test_that("Shiny app: 'Load example data' + 'Run network' runs the bundled Arabidopsis network", {
   skip_on_cran()
   skip_if_not_installed("shinytest2")
   skip_if_not_installed("chromote")
@@ -96,6 +144,17 @@ test_that("Shiny app: 'Load example data' runs the bundled Arabidopsis network e
 
   app$set_inputs(`run-num_cores` = 6, wait_ = FALSE)
   app$click("run-load_example", wait_ = FALSE)
+  app$wait_for_idle(timeout = 10000)
+
+  # example-data summary shows (with the bundled files listed), and the user still
+  # has to click "Run network" themselves
+  data_inputs_html <- app$get_html("#run-data_inputs")
+  expect_match(data_inputs_html, "Using bundled Arabidopsis example data")
+  expect_match(data_inputs_html, "reg_mat_protein.csv")
+  # the bundled clustering matrix note shows too, since clustering is on by default
+  expect_match(app$get_html("#run-clustering_data_input"), "cluster_mat_protein.csv")
+
+  app$click("run-run", wait_ = FALSE)
   app$wait_for_idle(timeout = 180000)
 
   status_html <- app$get_html("#run-status")

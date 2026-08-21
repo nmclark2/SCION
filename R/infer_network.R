@@ -13,7 +13,7 @@ weight_matrix_to_edges <- function(network, weightthreshold) {
   keep <- keep[order(keep[, "row"], keep[, "col"]), , drop = FALSE]
   data.frame(
     Regulator = colnames(trimmed)[keep[, "col"]],
-    Interaction = "regulates",
+    Interaction = rep("regulates", nrow(keep)),
     Target = rownames(trimmed)[keep[, "row"]],
     Weight = trimmed[keep],
     stringsAsFactors = FALSE
@@ -67,8 +67,8 @@ infer_network_clustered <- function(target_data, reg_data, cluster_assignment, w
 
   for (i in seq_len(n_clusters)) {
     mygenes <- row.names(cluster_assignment)[cluster_assignment$clusters == i]
-    clustertargetdata <- target_data[row.names(target_data) %in% mygenes, ]
-    clusterregdata <- reg_data[row.names(reg_data) %in% mygenes, ]
+    clustertargetdata <- target_data[row.names(target_data) %in% mygenes, , drop = FALSE]
+    clusterregdata <- reg_data[row.names(reg_data) %in% mygenes, , drop = FALSE]
 
     # GENIE3 cannot infer autoregulation on one TF, and errors with exactly two
     # (since one gets removed) -- so at least 3 TFs are needed when TFs are also
@@ -105,13 +105,13 @@ infer_network_clustered <- function(target_data, reg_data, cluster_assignment, w
 #' @keywords internal
 infer_hub_network <- function(target_data, reg_data, myhubs, weightthreshold, normalize,
                                num.cores, engine, ptm_sep, seed, ...) {
-  hubtargetdata <- target_data[row.names(target_data) %in% myhubs, ]
-  hubregdata <- reg_data[row.names(reg_data) %in% myhubs, ]
+  hubtargetdata <- target_data[row.names(target_data) %in% myhubs, , drop = FALSE]
+  hubregdata <- reg_data[row.names(reg_data) %in% myhubs, , drop = FALSE]
   if (dim(hubtargetdata)[1] == 0) {
     # strip PTM site information (assumes exactly one separator per hub name) to find targets
     genes <- unlist(strsplit(myhubs, ptm_sep, fixed = TRUE))
     genes <- genes[seq(1, length(genes), by = 2)]
-    hubtargetdata <- target_data[row.names(target_data) %in% genes, ]
+    hubtargetdata <- target_data[row.names(target_data) %in% genes, , drop = FALSE]
   }
   network <- RS.Get.Weight.Matrix(t(hubtargetdata), t(hubregdata), normalize = normalize,
                                    num.cores = num.cores, engine = engine, seed = seed, ...)
@@ -145,9 +145,11 @@ infer_hub_network <- function(target_data, reg_data, myhubs, weightthreshold, no
 #'   produced any network this one will be compared against (see
 #'   [RS.Get.Weight.Matrix()] and [compute_fdr_threshold()]).
 #' @param ptm_sep separator used to split a PTM-site regulator name into gene
-#'   symbol + site (e.g. `"."` for `SOX2.S35`, `"_"` for `MEF2C_S453s`). Only
-#'   used when connecting cluster hubs and no hub gene is directly present in
-#'   `target_data`'s row names.
+#'   symbol + site (e.g. `"."` for `SOX2.S35`, `"_"` for `MEF2C_S453s`): when
+#'   connecting cluster hubs and no hub gene is directly present in
+#'   `target_data`'s row names, and always in the returned edge table (see
+#'   [split_ptm_sites()]) so a PTM-annotated regulator and its plain-symbol
+#'   target are recognized as the same gene.
 #' @param seed optional RNG seed set once, at the very start of this call
 #'   (before clustering-aware seed draws or any inference). Without it, the
 #'   result depends on the ambient global RNG state at call time -- pass an
@@ -165,10 +167,42 @@ infer_network <- function(target_data, reg_data, cluster_assignment = NULL,
   if (!is.null(seed)) {
     set.seed(seed)
   }
-  if (is.null(cluster_assignment)) {
+  result <- if (is.null(cluster_assignment)) {
     infer_network_single(target_data, reg_data, weightthreshold, normalize, num.cores, engine, ...)
   } else {
     infer_network_clustered(target_data, reg_data, cluster_assignment, weightthreshold, normalize,
                              connect_hubs, num.cores, engine, ptm_sep, ...)
   }
+  split_ptm_sites(result, ptm_sep)
+}
+
+#' Split a PTM-site regulator name into gene symbol + site, if present
+#'
+#' Regulator names get matched against target gene names elsewhere (hub
+#' connection, network visualization, out-degree counting); a PTM-annotated
+#' regulator like `SOX2.S35` would otherwise show up as a node distinct from
+#' the plain-gene-symbol target `SOX2`, when they're the same underlying gene.
+#' This strips the site off `Regulator` into its own `Site` column so
+#' `Regulator` is always just the gene symbol.
+#'
+#' @param network an edge table with a `Regulator` column, or `NULL`.
+#' @param ptm_sep separator to split on (e.g. `"."` for `SOX2.S35`, `"_"` for
+#'   `MEF2C_S453s`). Only regulators actually containing `ptm_sep` are split;
+#'   others are left as-is. If none contain it, `network` is returned
+#'   unchanged (no `Site` column added) -- so non-PTM data keeps exactly the
+#'   `Regulator`/`Interaction`/`Target`/`Weight` schema it always has.
+#' @return `network` with `Regulator` reduced to gene symbols and a `Site`
+#'   column added (`NA` for regulators that had no `ptm_sep`), or `network`
+#'   unchanged if it's `NULL`, empty, or no `Regulator` contains `ptm_sep`.
+#' @keywords internal
+split_ptm_sites <- function(network, ptm_sep) {
+  if (is.null(network) || nrow(network) == 0 || !any(grepl(ptm_sep, network$Regulator, fixed = TRUE))) {
+    return(network)
+  }
+  parts <- strsplit(network$Regulator, ptm_sep, fixed = TRUE)
+  gene <- vapply(parts, `[`, character(1), 1)
+  site <- vapply(parts, function(p) if (length(p) >= 2) paste(p[-1], collapse = ptm_sep) else NA_character_,
+                  character(1))
+  data.frame(Regulator = gene, Site = site, Interaction = network$Interaction,
+             Target = network$Target, Weight = network$Weight, stringsAsFactors = FALSE)
 }
