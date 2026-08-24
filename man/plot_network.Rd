@@ -4,7 +4,7 @@
 \alias{plot_network}
 \title{Plot a SCION network}
 \usage{
-plot_network(edge_table, interactive = FALSE, ...)
+plot_network(edge_table, interactive = FALSE, legend = TRUE, ...)
 }
 \arguments{
 \item{edge_table}{an edge table with \code{Regulator}, \code{Target}, \code{Weight} columns
@@ -15,6 +15,15 @@ plot_network(edge_table, interactive = FALSE, ...)
 (static). If \code{TRUE}, returns an interactive \code{visNetwork} HTML widget
 (requires the optional \code{visNetwork} package) with on-canvas zoom/pan
 controls.}
+
+\item{legend}{if \code{TRUE} (default) and \code{interactive = TRUE}, attaches the
+HTML legend to the returned widget via \code{htmlwidgets::prependContent()}.
+Only takes effect for standalone use (R Markdown, \code{htmlwidgets::saveWidget()})
+-- Shiny's \code{renderVisNetwork()} doesn't transmit prepended content to the
+client at all (and warns about it), so the Shiny app calls this with
+\code{legend = FALSE} and renders \code{\link[=network_legend_html]{network_legend_html()}} as its own separate
+UI element instead (see \code{tab_visualize.R}). Ignored for \code{interactive = FALSE},
+which always draws its own legend directly on the plot.}
 
 \item{...}{additional arguments passed to \code{igraph::plot.igraph()} (static)
 or \code{visNetwork::visNetwork()} (interactive).}

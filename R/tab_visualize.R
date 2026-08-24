@@ -64,7 +64,9 @@ visualizeTabServer <- function(id = "visualize", thresholded_network) {
     })
 
     output$network_vis <- visNetwork::renderVisNetwork({
-      plot_network(current_network(), interactive = TRUE)
+      # legend = FALSE: the legend is rendered separately, above, as its own
+      # UI element (output$legend) -- see plot_network()'s "legend" argument.
+      plot_network(current_network(), interactive = TRUE, legend = FALSE)
     })
 
     output$network_plot <- shiny::renderPlot({

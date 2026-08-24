@@ -14,13 +14,21 @@
 #'   (static). If `TRUE`, returns an interactive `visNetwork` HTML widget
 #'   (requires the optional `visNetwork` package) with on-canvas zoom/pan
 #'   controls.
+#' @param legend if `TRUE` (default) and `interactive = TRUE`, attaches the
+#'   HTML legend to the returned widget via `htmlwidgets::prependContent()`.
+#'   Only takes effect for standalone use (R Markdown, `htmlwidgets::saveWidget()`)
+#'   -- Shiny's `renderVisNetwork()` doesn't transmit prepended content to the
+#'   client at all (and warns about it), so the Shiny app calls this with
+#'   `legend = FALSE` and renders [network_legend_html()] as its own separate
+#'   UI element instead (see `tab_visualize.R`). Ignored for `interactive = FALSE`,
+#'   which always draws its own legend directly on the plot.
 #' @param ... additional arguments passed to `igraph::plot.igraph()` (static)
 #'   or `visNetwork::visNetwork()` (interactive).
 #' @return for `interactive = FALSE`, invisibly returns the `igraph` object
 #'   (after plotting it, with a legend, as a side effect); for
 #'   `interactive = TRUE`, a `visNetwork` htmlwidget.
 #' @export
-plot_network <- function(edge_table, interactive = FALSE, ...) {
+plot_network <- function(edge_table, interactive = FALSE, legend = TRUE, ...) {
   g <- igraph::graph_from_data_frame(edge_table[, c("Regulator", "Target", "Weight")], directed = TRUE)
   weights <- igraph::E(g)$Weight
 
@@ -70,12 +78,18 @@ plot_network <- function(edge_table, interactive = FALSE, ...) {
   # NOTE: htmlwidgets::prependContent() correctly attaches this to the widget
   # object (confirmed via htmlwidgets::saveWidget()), but Shiny's
   # renderVisNetwork()/visNetworkOutput() binding does not transmit prepend/
-  # append content to the client -- it's dropped somewhere in that
-  # serialization path. It still renders fine for standalone/non-Shiny use
-  # (R Markdown, saveWidget()), so it stays here; the Shiny app additionally
-  # renders network_legend_html() as its own independent UI element
-  # (see tab_visualize.R) so the legend is guaranteed to show up there too.
-  htmlwidgets::prependContent(vis, network_legend_html(regulator_color, target_color))
+  # append content to the client at all -- it's silently dropped, and as of
+  # recent htmlwidgets versions also emits "Ignoring prepended content;
+  # prependContent can't be used in a Shiny render call" to the console. It
+  # still renders fine for standalone/non-Shiny use (R Markdown,
+  # saveWidget()), so it's still applied by default here -- but the Shiny app
+  # passes legend = FALSE and instead renders network_legend_html() as its
+  # own independent UI element (see tab_visualize.R), so this call never runs
+  # (and never warns) from inside the app.
+  if (isTRUE(legend)) {
+    vis <- htmlwidgets::prependContent(vis, network_legend_html(regulator_color, target_color))
+  }
+  vis
 }
 
 #' @keywords internal
