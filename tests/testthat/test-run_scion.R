@@ -1,0 +1,158 @@
+write_test_csvs <- function(mats, dir) {
+  target_file <- file.path(dir, "target.csv")
+  reg_file <- file.path(dir, "reg.csv")
+  utils::write.csv(mats$target, target_file)
+  utils::write.csv(mats$reg, reg_file)
+  list(target_file = target_file, reg_file = reg_file)
+}
+
+test_that("run_scion(permute = TRUE) runs the real network, permutations, and FDR threshold in one call", {
+  skip_on_cran()
+  mats <- make_test_matrices()
+  tmp_dir <- tempfile("scion-test-")
+  dir.create(tmp_dir)
+  on.exit(unlink(tmp_dir, recursive = TRUE), add = TRUE)
+  files <- write_test_csvs(mats, tmp_dir)
+
+  result <- run_scion(files$target_file, files$reg_file, weightthreshold = 0, normalize = FALSE,
+                       num.cores = 1, seed = 1, permute = TRUE,
+                       n_permutations = 3, base_seed = 0, target_fdr = 0.05,
+                       nb.trees = 50, trace = FALSE)
+
+  expect_true(is.data.frame(result$network))
+  expect_length(result$permuted_networks, 3)
+  expect_true(all(c("curve", "threshold", "thresholded_network") %in% names(result$fdr_result)))
+  expect_identical(result$network_thresholded, result$fdr_result$thresholded_network)
+  if (!is.na(result$fdr_result$threshold)) {
+    expect_true(all(result$network_thresholded$Weight >= result$fdr_result$threshold))
+  }
+})
+
+test_that("run_scion(permute = TRUE, normalize = TRUE) warns and overrides to normalize = FALSE", {
+  skip_on_cran()
+  mats <- make_test_matrices()
+  tmp_dir <- tempfile("scion-test-")
+  dir.create(tmp_dir)
+  on.exit(unlink(tmp_dir, recursive = TRUE), add = TRUE)
+  files <- write_test_csvs(mats, tmp_dir)
+
+  expect_warning(
+    result <- run_scion(files$target_file, files$reg_file, weightthreshold = 0, normalize = TRUE,
+                         num.cores = 1, seed = 1, permute = TRUE,
+                         n_permutations = 3, base_seed = 0, target_fdr = 0.05,
+                         nb.trees = 50, trace = FALSE),
+    "invalidate the rank-based FDR comparison"
+  )
+  expect_false(result$params$normalize)
+
+  # should now behave identically to explicitly passing normalize = FALSE
+  reference <- run_scion(files$target_file, files$reg_file, weightthreshold = 0, normalize = FALSE,
+                          num.cores = 1, seed = 1, permute = TRUE,
+                          n_permutations = 3, base_seed = 0, target_fdr = 0.05,
+                          nb.trees = 50, trace = FALSE)
+  expect_identical(result$network, reference$network)
+  expect_identical(result$permuted_networks, reference$permuted_networks)
+})
+
+test_that("run_scion(permute = TRUE, weightthreshold != 0) warns and overrides to weightthreshold = 0", {
+  skip_on_cran()
+  mats <- make_test_matrices()
+  tmp_dir <- tempfile("scion-test-")
+  dir.create(tmp_dir)
+  on.exit(unlink(tmp_dir, recursive = TRUE), add = TRUE)
+  files <- write_test_csvs(mats, tmp_dir)
+
+  expect_warning(
+    result <- run_scion(files$target_file, files$reg_file, weightthreshold = 0.2, normalize = FALSE,
+                         num.cores = 1, seed = 1, permute = TRUE,
+                         n_permutations = 3, base_seed = 0, target_fdr = 0.05,
+                         nb.trees = 50, trace = FALSE),
+    "biasing which edges"
+  )
+  expect_equal(result$params$weightthreshold, 0)
+
+  # should now behave identically to explicitly passing weightthreshold = 0
+  reference <- run_scion(files$target_file, files$reg_file, weightthreshold = 0, normalize = FALSE,
+                          num.cores = 1, seed = 1, permute = TRUE,
+                          n_permutations = 3, base_seed = 0, target_fdr = 0.05,
+                          nb.trees = 50, trace = FALSE)
+  expect_identical(result$network, reference$network)
+  expect_identical(result$permuted_networks, reference$permuted_networks)
+})
+
+test_that("run_scion(permute = TRUE)'s permutations match a standalone permute_network() call", {
+  skip_on_cran()
+  mats <- make_test_matrices()
+  tmp_dir <- tempfile("scion-test-")
+  dir.create(tmp_dir)
+  on.exit(unlink(tmp_dir, recursive = TRUE), add = TRUE)
+  files <- write_test_csvs(mats, tmp_dir)
+
+  result <- run_scion(files$target_file, files$reg_file, weightthreshold = 0, normalize = FALSE,
+                       num.cores = 1, seed = 1, permute = TRUE,
+                       n_permutations = 3, base_seed = 0, nb.trees = 50, trace = FALSE)
+
+  standalone <- permute_network(result$target, result$reg, n_permutations = 3, base_seed = 0,
+                                 num.cores = 1, weightthreshold = 0, normalize = FALSE,
+                                 nb.trees = 50, trace = FALSE)
+
+  expect_identical(result$permuted_networks, standalone)
+})
+
+test_that("run_scion() without permute = TRUE does not compute FDR/permutation results", {
+  skip_on_cran()
+  mats <- make_test_matrices()
+  tmp_dir <- tempfile("scion-test-")
+  dir.create(tmp_dir)
+  on.exit(unlink(tmp_dir, recursive = TRUE), add = TRUE)
+  files <- write_test_csvs(mats, tmp_dir)
+
+  result <- run_scion(files$target_file, files$reg_file, weightthreshold = 0, normalize = FALSE,
+                       num.cores = 1, nb.trees = 50, trace = FALSE)
+
+  expect_false("fdr_result" %in% names(result))
+  expect_false("permuted_networks" %in% names(result))
+  expect_false("network_thresholded" %in% names(result))
+})
+
+test_that("output_file writes the thresholded network when permute = TRUE", {
+  skip_on_cran()
+  mats <- make_test_matrices()
+  tmp_dir <- tempfile("scion-test-")
+  dir.create(tmp_dir)
+  on.exit(unlink(tmp_dir, recursive = TRUE), add = TRUE)
+  files <- write_test_csvs(mats, tmp_dir)
+  out_file <- file.path(tmp_dir, "out.txt")
+
+  result <- run_scion(files$target_file, files$reg_file, weightthreshold = 0, normalize = FALSE,
+                       num.cores = 1, permute = TRUE, n_permutations = 3,
+                       nb.trees = 50, trace = FALSE, output_file = out_file)
+
+  written <- utils::read.delim(out_file)
+  expect_equal(nrow(written), nrow(result$network_thresholded))
+
+  # output_file also triggers save_diagnostic_plots() automatically -- the
+  # CLI/scripted path has no app to view/download the interactive plots from
+  expect_true(file.exists(file.path(tmp_dir, "out_weight_distribution.pdf")))
+  expect_true(file.exists(file.path(tmp_dir, "out_outdegree_distribution.pdf")))
+  expect_true(file.exists(file.path(tmp_dir, "out_fdr_curve.pdf")))
+  expect_true(file.exists(file.path(tmp_dir, "out_weight_comparison.pdf")))
+})
+
+test_that("output_file without permute = TRUE still saves the weight/outdegree plots, not FDR ones", {
+  skip_on_cran()
+  mats <- make_test_matrices()
+  tmp_dir <- tempfile("scion-test-")
+  dir.create(tmp_dir)
+  on.exit(unlink(tmp_dir, recursive = TRUE), add = TRUE)
+  files <- write_test_csvs(mats, tmp_dir)
+  out_file <- file.path(tmp_dir, "out.txt")
+
+  run_scion(files$target_file, files$reg_file, weightthreshold = 0, normalize = FALSE,
+            num.cores = 1, nb.trees = 50, trace = FALSE,
+            output_file = out_file)
+
+  expect_true(file.exists(file.path(tmp_dir, "out_weight_distribution.pdf")))
+  expect_true(file.exists(file.path(tmp_dir, "out_outdegree_distribution.pdf")))
+  expect_false(file.exists(file.path(tmp_dir, "out_fdr_curve.pdf")))
+})

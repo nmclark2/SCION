@@ -1,0 +1,8 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+log.txt
+.DS_Store
+.claude/
+dev-test-data/

@@ -1,0 +1,116 @@
+#' Read SCION input matrices from a delimited text format or GCT
+#'
+#' Reads target and regulator expression matrices (and, optionally, a separate
+#' clustering matrix), restricts each to a gene list if provided, and drops any
+#' row containing a missing value -- SCION does not support missing values, so
+#' unlike the private-version `na.max` proportional filter, this is always an
+#' all-or-nothing drop.
+#'
+#' @param target_data_file,reg_data_file path to target/regulator expression
+#'   matrices. Delimited text (first column = gene names, remaining columns =
+#'   samples): `.csv` (comma), `.tsv`/`.txt` (tab), or `.ssv` (semicolon),
+#'   dispatched by extension. GCT: a GCT(x) file, read via
+#'   `cmapR::parse_gctx()` (requires the optional `cmapR` package -- install
+#'   with `BiocManager::install("cmapR")`).
+#' @param target_genes_file,reg_genes_file optional path to a delimited text file
+#'   (`.csv`/`.tsv`/`.txt`/`.ssv`, same extension dispatch as above) listing which
+#'   genes to keep as targets/regulators (first column = gene names). `NULL`
+#'   (default) keeps every gene present in the corresponding data file.
+#' @param gene_list_header whether `target_genes_file`/`reg_genes_file` have a
+#'   header row. Default `TRUE` (matches this package's own tutorial data).
+#'   Set to `FALSE` for a plain one-gene-symbol-per-line file with no header
+#'   (e.g. PANOPLY's `TF_file` convention) -- with the default `TRUE`, such a
+#'   file would silently have its first gene misread as a column header and
+#'   dropped.
+#' @param clustering_data_file optional path to a delimited text clustering
+#'   matrix (rows = genes, columns = samples; same extension dispatch as
+#'   above), used by [cluster_genes()]. Restricted to genes that appear in
+#'   `target_genes_file` or `reg_genes_file` when those are given.
+#' @param format `"auto"` (default), `"delimited"`, or `"gct"`. `"auto"` detects
+#'   GCT(x) from `target_data_file`'s extension (`.gct`/`.gctx`) and falls back
+#'   to delimited text otherwise -- pass `"delimited"`/`"gct"` explicitly to
+#'   override. Regulator gene names may use either a dot (`SOX2.S35`) or
+#'   underscore (`MEF2C_S453s`) PTM-site convention; both are left as-is here
+#'   (see the `ptm_sep` argument of [infer_network()] for where the convention
+#'   matters downstream).
+#' @return a list with `target` and `reg` data frames (genes as rows, samples as
+#'   columns, row names made syntactically valid via [make.names()]), and
+#'   `cluster_data` (or `NULL` if `clustering_data_file` was not given).
+#' @export
+read_scion_inputs <- function(target_data_file, reg_data_file, target_genes_file = NULL,
+                               reg_genes_file = NULL, gene_list_header = TRUE,
+                               clustering_data_file = NULL, format = c("auto", "delimited", "gct")) {
+  format <- match.arg(format)
+  if (format == "auto") {
+    format <- detect_scion_format(target_data_file)
+  }
+
+  if (format == "gct") {
+    if (!requireNamespace("cmapR", quietly = TRUE)) {
+      stop("Reading GCT files requires the 'cmapR' package. Install it with BiocManager::install('cmapR').")
+    }
+    target_data <- as.data.frame(cmapR::parse_gctx(target_data_file)@mat)
+    reg_data <- as.data.frame(cmapR::parse_gctx(reg_data_file)@mat)
+  } else {
+    target_data <- read_delimited_matrix(target_data_file)
+    reg_data <- read_delimited_matrix(reg_data_file)
+  }
+
+  target_genes <- if (!is.null(target_genes_file)) {
+    read_delimited(target_genes_file, header = gene_list_header)
+  } else {
+    NULL
+  }
+  reg_genes <- if (!is.null(reg_genes_file)) {
+    read_delimited(reg_genes_file, header = gene_list_header)
+  } else {
+    NULL
+  }
+
+  if (!is.null(target_genes)) {
+    target_data <- target_data[row.names(target_data) %in% target_genes[, 1], ]
+  }
+  if (!is.null(reg_genes)) {
+    reg_data <- reg_data[row.names(reg_data) %in% reg_genes[, 1], ]
+  }
+
+  rownames(target_data) <- make.names(rownames(target_data))
+  rownames(reg_data) <- make.names(rownames(reg_data))
+
+  if (sum(is.na(target_data), is.na(reg_data)) > 0) {
+    message("Missing values detected in target and/or regulator matrix. SCION cannot use missing ",
+            "values. Features with missing values have been removed. To retain these features, ",
+            "please impute missing values.")
+    target_data <- na.omit(target_data)
+    reg_data <- na.omit(reg_data)
+  }
+
+  cluster_data <- NULL
+  if (!is.null(clustering_data_file)) {
+    cluster_data <- read_delimited_matrix(clustering_data_file)
+    keep <- rep(TRUE, nrow(cluster_data))
+    if (!is.null(target_genes) || !is.null(reg_genes)) {
+      keep <- row.names(cluster_data) %in% c(
+        if (!is.null(target_genes)) target_genes[, 1] else character(0),
+        if (!is.null(reg_genes)) reg_genes[, 1] else character(0)
+      )
+    }
+    cluster_data <- cluster_data[keep, ]
+    rownames(cluster_data) <- make.names(rownames(cluster_data))
+    if (sum(is.na(cluster_data)) > 0) {
+      message("Missing values detected in clustering matrix. SCION cannot use missing values. ",
+              "Features with missing values have been removed. To retain these features, please ",
+              "impute missing values.")
+      cluster_data <- na.omit(cluster_data)
+    }
+  }
+
+  list(target = target_data, reg = reg_data, cluster_data = cluster_data)
+}
+
+#' Detect whether a file is GCT(x) or delimited-text, by extension
+#' @keywords internal
+detect_scion_format <- function(path) {
+  ext <- tolower(tools::file_ext(path))
+  if (ext %in% c("gct", "gctx")) "gct" else "delimited"
+}

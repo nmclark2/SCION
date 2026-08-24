@@ -1,0 +1,140 @@
+#' Infer a weighted regulator -> target network via random-forest importance
+#'
+#' For each target gene, fits a random forest predicting its expression from all
+#' regulator features, and records each regulator's importance as the edge
+#' weight. This is the GENIE3-style core of SCION's network inference, and is
+#' called identically for the real network and for every permutation generated
+#' by [permute_network()].
+#'
+#' @param target.matrix data frame/matrix of target expression, samples as rows,
+#'   genes as columns.
+#' @param input.matrix data frame/matrix of regulator (input) expression, samples
+#'   as rows, genes as columns.
+#' @param K number of candidate regulators considered at each tree split: `"sqrt"`,
+#'   `"all"`, or an integer.
+#' @param nb.trees number of trees per random forest.
+#' @param importance.measure `"IncNodePurity"` or `"%IncMSE"`.
+#' @param seed optional RNG seed for the top-level per-target seed draw. Must be
+#'   set consistently between a real network and its permutations for the
+#'   permutation seeding scheme in [permute_network()] to be reproducible.
+#' @param trace if `TRUE`, emit a progress message per target gene.
+#' @param normalize if `TRUE`, rescale the weight matrix to `[0, 1]`.
+#' @param num.cores number of cores to use: a `num.cores - 1` FORK cluster is
+#'   used to parallelize across target genes (disabled when `num.cores <= 2`).
+#' @param ... additional arguments passed to `randomForest::randomForest()`.
+#' @return a numeric matrix of edge weights (targets x regulators), or `NULL` if
+#'   there are no targets or no regulators.
+#' @export
+RS.Get.Weight.Matrix <- function(target.matrix, input.matrix, K = "sqrt", nb.trees = 10000,
+                                  importance.measure = "%IncMSE", seed = NULL, trace = TRUE,
+                                  normalize = TRUE, num.cores = 1, ...) {
+  # set random number generator seed if seed is given
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
+  # to be nice, report when parameter importance.measure is not correctly spelled
+  if (importance.measure != "IncNodePurity" && importance.measure != "%IncMSE") {
+    stop("Parameter importance.measure must be \"IncNodePurity\" or \"%IncMSE\"")
+  }
+
+  # normalize expression matrix
+  target.matrix <- apply(target.matrix, 2, function(x) (x - mean(x, na.rm = TRUE)) / stats::sd(x, na.rm = TRUE))
+  input.matrix <- apply(input.matrix, 2, function(x) (x - mean(x, na.rm = TRUE)) / stats::sd(x, na.rm = TRUE))
+  # a zero-variance regulator (constant across this cluster's samples) z-scores to
+  # NaN and is dropped -- it carries no information to predict targets from anyway
+  input.matrix <- input.matrix[, !is.na(colSums(input.matrix)), drop = FALSE]
+
+  num.samples <- dim(target.matrix)[1]
+  num.targets <- dim(target.matrix)[2]
+  num.inputs <- dim(input.matrix)[2]
+  target.names <- colnames(target.matrix)
+  input.names <- colnames(input.matrix)
+
+  # if no inputs or targets, return NULL
+  if (is.null(num.inputs) || is.null(num.targets) || num.inputs == 0 || num.targets == 0) {
+    return(NULL)
+  }
+
+  # setup weight matrix
+  weight.matrix <- matrix(0.0, nrow = num.targets, ncol = num.inputs)
+  rownames(weight.matrix) <- target.names
+  colnames(weight.matrix) <- input.names
+
+  # set mtry
+  if (is.numeric(K)) {
+    mtry <- K
+  } else if (K == "sqrt") {
+    mtry <- round(sqrt(num.inputs))
+  } else if (K == "all") {
+    mtry <- num.inputs - 1
+  } else {
+    stop("Parameter K must be \"sqrt\", or \"all\", or an integer")
+  }
+
+  # compute importances for every target gene
+  names(target.names) <- target.names
+
+  # one seed per target, drawn in the parent, so the forest for a given target is
+  # the same whichever worker fits it -- and whether or not there is a worker at all
+  target.seeds <- stats::setNames(sample.int(.Machine$integer.max, length(target.names)), target.names)
+
+  # parallelize if at least 3 cores, otherwise, don't
+  if (num.cores > 2) {
+    clst <- parallel::makeCluster(num.cores - 1, type = "FORK", outfile = "log.txt")
+    doParallel::registerDoParallel(clst)
+    imList <- parallel::parLapply(cl = clst, X = target.names, function(x) {
+      rsgwm2_randomforest(x, num.targets, target.names, input.matrix, target.matrix, trace,
+                          mtry, nb.trees, importance.measure, seed = target.seeds[[x]], ...)
+    })
+    parallel::stopCluster(cl = clst)
+  } else {
+    imList <- lapply(target.names, function(x) {
+      rsgwm2_randomforest(x, num.targets, target.names, input.matrix, target.matrix, trace,
+                          mtry, nb.trees, importance.measure, seed = target.seeds[[x]], ...)
+    })
+  }
+
+  for (nm in names(imList)) {
+    tcols <- names(imList[[nm]])
+    weight.matrix[nm, tcols] <- imList[[nm]]
+  }
+
+  # %IncMSE can come back NA for every target/regulator pair in a small or
+  # low-variance cluster (not just the single-regulator case guarded against
+  # upstream in infer_network_clustered()) -- min()/max() on an all-NA matrix
+  # would otherwise just warn and return +-Inf. Nothing usable was computed;
+  # say so the same way as the "no targets/no regulators" case above.
+  if (all(is.na(weight.matrix))) {
+    return(NULL)
+  }
+
+  mynet <- weight.matrix / num.samples
+  if (normalize) {
+    mynet <- (mynet - min(mynet, na.rm = TRUE)) / (max(mynet, na.rm = TRUE) - min(mynet, na.rm = TRUE))
+  }
+  mynet
+}
+
+#' @keywords internal
+rsgwm2_randomforest <- function(target.gene.name, num.targets, target.names, input.matrix,
+                                 target.matrix, trace, mtry, nb.trees, importance.measure,
+                                 seed = NULL, ...) {
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
+  if (trace) {
+    target.gene.idx <- which(target.names == target.gene.name)
+    message(sprintf("Computing gene %d/%d", target.gene.idx, num.targets))
+  }
+
+  # NOTE: the target gene is deliberately NOT removed from the input (regulator)
+  # matrix, even if present there -- removing it breaks inference when there is
+  # only one regulator in a network. This also means autoregulation is not
+  # excluded from the network.
+  x <- input.matrix
+  y <- target.matrix[, target.gene.name]
+
+  rf <- randomForest::randomForest(x = x, y = y, mtry = mtry, ntree = nb.trees,
+                                    keep.forest = FALSE, importance = TRUE, ...)
+  randomForest::importance(rf)[, importance.measure]
+}

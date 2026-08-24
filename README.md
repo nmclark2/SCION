@@ -3,64 +3,69 @@ Spatiotemporal Clustering and Inference of Omics Networks (SC-ION)
 
 [![DOI](https://zenodo.org/badge/232898677.svg)](https://zenodo.org/badge/latestdoi/232898677)
 
+![SCION workflow: input target and regulator data, optionally cluster genes, infer a network per cluster, connect cluster hubs, threshold by permutation FDR, visualize the network, and optionally score network motifs (NMS) in Cytoscape](man/figures/workflow_schematic.svg)
+
 # Citing SC-ION
 If using SC-ION in your own work, please cite both this repository (using the DOI link above) and:
 
 Clark, N.M., Nolan, T.M., Wang, P. et al. Integrated omics networks reveal the temporal signaling events of brassinosteroid response in Arabidopsis. Nat Commun 12, 5858 (2021). https://doi.org/10.1038/s41467-021-26165-3
 
-# To run
-Download all R files to your computer from Github. The files will be downloaded in a .zip folder. Extract the .zip folder. This is your directory which contains SC-ION. Make sure to change the working directory in the "START_SCION.R" file to the directory which contains all of the R code that you downloaded from Github. Then, run the START_SCION.R file to build the RShiny App. Follow the instructions in the RShiny App (or in this vignette) to run your data. 
+# Also available via PANOPLY
 
-# Known issues
+SCION is also available as a task within [PANOPLY](https://github.com/broadinstitute/PANOPLY), a suite of proteogenomic data analysis pipelines for Terra.
 
-- This method will automatically write over files with the same name in your working directory. If you would like to compare your results, make sure to move them from your working directory or change your directory to prevent them being written over.
+# Installation
 
-- If you have previously used packages that load rlang (such as tidyverse), you may receive an error when trying to install some packages (such as dtwclust) that you need to update rlang, but it cannot be done. To fix this, you need to delete the rlang folder from your R folder, and then reinstall.
+```r
+install.packages("devtools")
+devtools::install_github("nmclark2/SCION")
+```
 
-# Test data
-Test data are provided in the TEST.zip folder. There are two folders inside of the TEST folder. 
+# Quick start
 
-The folder named Raw_Files can be used to test the script create_data_tables.R in the utilities folder. Running this script using these files should produce the files located in the Network_Files folder.
+To use the Shiny app:
 
-The files in the Network_Files folder can be run in SCION using the following settings. You can infer two separate networks, one for protein and one for phospho, by changing the regulator matrix and regulator list files.
+```r
+SCION::launchApp()
+```
 
-- Working directory: wherever the Network_Files folder is (you can copy and paste the path from Windows/Mac file explorer)
+Click "Load example data" in the sidebar to try it with a real dataset before uploading your own.
+The app walks through three steps: run a network, threshold it (by FDR or a flat weight cutoff),
+and visualize it. See the Help tab in the app for details on each option.
 
-- Target matrix: target_mat_RNA.csv
+To run from a script instead:
 
-- Regulator matrix: reg_mat_protein.csv (for phospho, use reg_mat_phospho.csv)
+```r
+library(SCION)
+result <- run_scion(
+  target_data_file = "target.csv",
+  reg_data_file = "regulators.csv"
+)
+```
 
-- Target list: target_list_RNA.csv
+Target/regulator/clustering matrices and gene lists can be CSV, TSV, plain-text (tab-delimited),
+SSV (semicolon-delimited), or GCT -- detected automatically from the file extension.
 
-- Regulator list: reg_list_protein.csv (for phospho, use reg_list_phospho.csv)
-
-- Normalize edge weights: You can choose Yes (default) or No and compare the results.
-
-- Edge threshold: leave at the default value of 0.33
-
-- Clustering: You can use either Temporal:DTW, Non-Temporal:ICA, or Non-Temporal:k-means and compare the results.
-
-- Clustering matrix: cluster_mat_protein.csv (for phospho, use cluster_mat_phospho.csv)
-
-- Clustering threshold: If using temporal DTW clustering, use 0.5. If using non-temporal ICA clustering, use 2. If using non-temporal k-means clustering, the value here does not matter.
-
-- Clusters file: Leave empty
-
-- Hub connection: You can choose Yes (default) or No and compare the results.
-
-- Number of cores (for parallelization): This is a small network and will run in about 1 minute without parallelization. If you would like to experiment with parallelization, you can increase the number of cores. Note that this will be dependent on the number of available cores on your machine.
-
-You can use the included screenshots (shinyscreenshot_protein.png and shinyscreenshot_phospho.png) or the vignette to check your settings. This screenshot has the settings for temporal clustering.
+See `?run_scion` for all options, including clustering, permutation-based FDR, and PTM-aware
+regulator names, or [SCION.pdf](SCION.pdf) for a complete reference manual of every function
+(regenerated automatically whenever the code changes).
 
 # Tutorials
 
-- A tutorial is included in the SCION_tutorial.html file using data from the TEST.zip folder.
-
 - A book chapter tutorial has been published: Clark, N.M., Hurgobin, B., Kelley, D.R., Lewsey, M.G., Walley, J.W. (2023). A Practical Guide to Inferring Multi-Omics Networks in Plant Systems. In: Kaufmann, K., Vandepoele, K. (eds) Plant Gene Regulatory Networks. Methods in Molecular Biology, vol 2698. Humana, New York, NY. https://doi.org/10.1007/978-1-0716-3354-0_15. A pre-print of this book chapter is available at [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8339502.svg)](https://doi.org/10.5281/zenodo.8339502)
 
-- Tutorials were written using SC-ION version 3.2. To replicate the tutorial results in version 4.0+, leave all new parameters at their default values.
+- Its accompanying vignette, [`legacy/SCION_v3.2_vignette.html`](legacy/SCION_v3.2_vignette.html), is kept for reference but describes SC-ION version 3.2 and is now historical -- it predates the current package structure, the Shiny app's Help tab, and the permutation/FDR workflow. For version 5+, the Help tab in the app is the up-to-date reference; to replicate the tutorial's own results, leave all parameters added after 3.2 at their defaults. One parameter is no longer applied automatically at all: a run always returns the full, unthresholded network now, so the tutorial's edge-weight cutoff (0.33) must be entered manually afterward, on the Network Diagnostics tab's "Threshold network" box.
 
 # Version History
+
+# Version 5.0 - August 24, 2026
+
+- SC-ION is now an installable R package (`devtools::install_github()`), replacing the old download-the-files-and-run-`START_SCION.R` workflow.
+- The Shiny app has been rebuilt as a 3-tab workflow -- Run, Network Diagnostics, Visualize -- plus a Help tab documenting every parameter.
+- Added permutation-based FDR thresholding (`run_scion(permute = TRUE)`, `permute_network()`, `compute_fdr_threshold()`), with an interactive FDR curve and adjustable cutoff in the app.
+- Added network visualization (`plot_network()`), both a static plot and an interactive one in the app; Cytoscape import is still available for large networks or publication figures.
+- Target/regulator/clustering matrices and gene lists now accept CSV, TSV, plain-text, or SSV (in addition to GCT), detected from the file extension -- not just CSV.
+- Legacy tutorial and test-data files moved to a `legacy/` folder; the SC-ION v3.2 vignette is kept for reference but is historical.
 
 # Version 4.2 - October 24, 2024
 - SC-ION is not compatible with missing values. Previously, it was left to the user to remove missing values. Now, SC-ION will automatically filter any rows in the target, regulator, and clustering matrices with missing values. When this is performed, a message is printed to warn the user that there are missing values in the dataset which have been removed. If one wants to include the features with missing values, those values will need to be imputed.

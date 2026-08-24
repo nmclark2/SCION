@@ -1,0 +1,38 @@
+name: Build reference manual
+
+# Regenerates SCION.pdf (a CRAN-style Rd2pdf reference manual covering every
+# documented function) whenever the docs sources change, and commits the
+# result back to the branch -- so SCION.pdf in the repo always matches the
+# current code, without anyone needing to remember to rebuild it by hand.
+
+on:
+  push:
+    branches: [master, package-restructure]
+    paths:
+      - "R/**"
+      - "man/**"
+      - "DESCRIPTION"
+      - "NAMESPACE"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build-manual:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+
+      - uses: r-lib/actions/setup-tinytex@v2
+
+      - name: Build PDF manual
+        run: R CMD Rd2pdf --title="SCION Reference Manual" --output=SCION.pdf --no-preview --force .
+
+      - name: Commit updated manual
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Update SCION.pdf reference manual [skip ci]"
+          file_pattern: SCION.pdf
