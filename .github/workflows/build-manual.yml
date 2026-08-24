@@ -31,7 +31,13 @@ jobs:
       - name: Build PDF manual
         run: R CMD Rd2pdf --title="SCION Reference Manual" --output=SCION.pdf --no-preview --force .
 
+      # master is a protected branch (PR-only) -- a direct push here would
+      # just be rejected ("GH006: Protected branch update failed"). Only
+      # auto-commit on unprotected branches; master's PDF gets refreshed the
+      # normal way, via whatever feature branch's own workflow run commits it
+      # before that branch is merged in.
       - name: Commit updated manual
+        if: github.ref_name != 'master'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Update SCION.pdf reference manual [skip ci]"
