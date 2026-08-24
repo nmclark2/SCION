@@ -10,8 +10,15 @@
 shuffle_matrix <- function(mat, dim = c("col", "row")) {
   dim <- match.arg(dim)
   mat <- as.matrix(mat)
+  # save the labels before shuffling -- apply()/sample() reorder values but
+  # not names, so without this the gene/sample IDs would end up misaligned
+  # with their (now-shuffled) values once reassigned below.
   orig_rownames <- rownames(mat)
   orig_colnames <- colnames(mat)
+  # "col": independently reshuffles each sample's own column of gene values
+  # (breaks gene-gene relationships within a sample, keeps sample structure).
+  # "row": independently reshuffles each gene's own row of sample values
+  # (breaks a gene's temporal/sample pattern, keeps gene-to-gene structure).
   shuffled <- if (dim == "col") apply(mat, 2, sample) else t(apply(mat, 1, sample))
   rownames(shuffled) <- orig_rownames
   colnames(shuffled) <- orig_colnames
@@ -90,9 +97,16 @@ permute_network <- function(target, reg, cluster_assignment = NULL, n_permutatio
   message("SCION_STAGE: permutation testing started")
 
   run_one <- function(i) {
+    # seeding on the permutation index itself (not e.g. a fresh random draw)
+    # is what makes permutation i reproducible regardless of num.cores or
+    # which other permutations ran alongside it.
     set.seed(base_seed + i)
     shuffled_target <- shuffle_matrix(target, permute_dim)
     shuffled_reg <- shuffle_matrix(reg, permute_dim)
+    # same cluster_assignment as the real network on every permutation --
+    # clustering is never recomputed here, only the inference step re-runs on
+    # shuffled data, so the real and null networks are only ever different
+    # because of the shuffle, not because they were grouped differently.
     infer_network(shuffled_target, shuffled_reg, cluster_assignment = cluster_assignment,
                    weightthreshold = weightthreshold, normalize = normalize,
                    connect_hubs = connect_hubs, num.cores = inner_num_cores,

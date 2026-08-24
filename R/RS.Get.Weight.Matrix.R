@@ -28,9 +28,11 @@
 RS.Get.Weight.Matrix <- function(target.matrix, input.matrix, K = "sqrt", nb.trees = 10000,
                                   importance.measure = "%IncMSE", seed = NULL, trace = TRUE,
                                   normalize = TRUE, num.cores = 1, ...) {
+  # set random number generator seed if seed is given
   if (!is.null(seed)) {
     set.seed(seed)
   }
+  # to be nice, report when parameter importance.measure is not correctly spelled
   if (importance.measure != "IncNodePurity" && importance.measure != "%IncMSE") {
     stop("Parameter importance.measure must be \"IncNodePurity\" or \"%IncMSE\"")
   }
@@ -48,14 +50,17 @@ RS.Get.Weight.Matrix <- function(target.matrix, input.matrix, K = "sqrt", nb.tre
   target.names <- colnames(target.matrix)
   input.names <- colnames(input.matrix)
 
+  # if no inputs or targets, return NULL
   if (is.null(num.inputs) || is.null(num.targets) || num.inputs == 0 || num.targets == 0) {
     return(NULL)
   }
 
+  # setup weight matrix
   weight.matrix <- matrix(0.0, nrow = num.targets, ncol = num.inputs)
   rownames(weight.matrix) <- target.names
   colnames(weight.matrix) <- input.names
 
+  # set mtry
   if (is.numeric(K)) {
     mtry <- K
   } else if (K == "sqrt") {
@@ -66,12 +71,14 @@ RS.Get.Weight.Matrix <- function(target.matrix, input.matrix, K = "sqrt", nb.tre
     stop("Parameter K must be \"sqrt\", or \"all\", or an integer")
   }
 
+  # compute importances for every target gene
   names(target.names) <- target.names
 
   # one seed per target, drawn in the parent, so the forest for a given target is
   # the same whichever worker fits it -- and whether or not there is a worker at all
   target.seeds <- stats::setNames(sample.int(.Machine$integer.max, length(target.names)), target.names)
 
+  # parallelize if at least 3 cores, otherwise, don't
   if (num.cores > 2) {
     clst <- parallel::makeCluster(num.cores - 1, type = "FORK", outfile = "log.txt")
     doParallel::registerDoParallel(clst)
