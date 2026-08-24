@@ -24,6 +24,7 @@ Imports:
     igraph,
     parallel,
     randomForest,
+    readr,
     stats,
     tools,
     utils

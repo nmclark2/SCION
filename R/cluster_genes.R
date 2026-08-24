@@ -16,8 +16,9 @@
 #'   `"upload"` (use a pre-computed clusters file).
 #' @param threshold clustering threshold used by `"dtw"` and `"ica"`; ignored by
 #'   `"kmeans"` and `"upload"`.
-#' @param clusters_file path to a CSV of pre-computed clusters (first column =
-#'   gene names, a `clusters` column with cluster numbers). Required when
+#' @param clusters_file path to a delimited text file (`.csv`/`.tsv`/`.txt`/`.ssv`,
+#'   dispatched by extension) of pre-computed clusters (first column = gene
+#'   names, a `clusters` column with cluster numbers). Required when
 #'   `method = "upload"`.
 #' @param target_data,reg_data the processed target/regulator matrices (rows =
 #'   genes, columns = samples). `reg_data` alone is also used by `method =
@@ -45,7 +46,7 @@ cluster_genes <- function(clustering_data = NULL, method = c("none", "dtw", "ica
   message("SCION_STAGE: clustering started")
 
   result <- if (method == "upload") {
-    clusters <- utils::read.csv(clusters_file, row.names = 1)
+    clusters <- read_delimited_matrix(clusters_file)
     rownames(clusters) <- make.names(rownames(clusters))
     clusters
   } else {

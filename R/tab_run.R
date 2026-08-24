@@ -241,8 +241,10 @@ runSidebarServer <- function(id = "run", parent_session) {
         )
       } else {
         shiny::tagList(
-          shiny::fileInput(ns("target_data_file"), "Target matrix", accept = c(".csv", ".gct")),
-          shiny::fileInput(ns("reg_data_file"), "Regulator matrix", accept = c(".csv", ".gct")),
+          shiny::fileInput(ns("target_data_file"), "Target matrix",
+                            accept = c(".csv", ".tsv", ".txt", ".ssv", ".gct")),
+          shiny::fileInput(ns("reg_data_file"), "Regulator matrix",
+                            accept = c(".csv", ".tsv", ".txt", ".ssv", ".gct")),
           shiny::fileInput(ns("target_genes_file"), "Target gene list (optional)"),
           shiny::fileInput(ns("reg_genes_file"), "Regulator gene list (optional)"),
           shiny::checkboxInput(ns("gene_list_header"), "Gene lists have a header row", value = TRUE)

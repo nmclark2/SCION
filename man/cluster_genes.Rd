@@ -27,8 +27,9 @@ independent component analysis), \code{"kmeans"} (non-temporal, k-means), or
 \item{threshold}{clustering threshold used by \code{"dtw"} and \code{"ica"}; ignored by
 \code{"kmeans"} and \code{"upload"}.}
 
-\item{clusters_file}{path to a CSV of pre-computed clusters (first column =
-gene names, a \code{clusters} column with cluster numbers). Required when
+\item{clusters_file}{path to a delimited text file (\code{.csv}/\code{.tsv}/\code{.txt}/\code{.ssv},
+dispatched by extension) of pre-computed clusters (first column = gene
+names, a \code{clusters} column with cluster numbers). Required when
 \code{method = "upload"}.}
 
 \item{target_data, reg_data}{the processed target/regulator matrices (rows =

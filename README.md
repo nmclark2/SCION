@@ -43,6 +43,9 @@ result <- run_scion(
 )
 ```
 
+Target/regulator/clustering matrices and gene lists can be CSV, TSV, plain-text (tab-delimited),
+SSV (semicolon-delimited), or GCT -- detected automatically from the file extension.
+
 See `?run_scion` for all options, including clustering, permutation-based FDR, and PTM-aware
 regulator names, or [SCION.pdf](SCION.pdf) for a complete reference manual of every function
 (regenerated automatically whenever the code changes).
@@ -61,6 +64,7 @@ regulator names, or [SCION.pdf](SCION.pdf) for a complete reference manual of ev
 - The Shiny app has been rebuilt as a 3-tab workflow -- Run, Network Diagnostics, Visualize -- plus a Help tab documenting every parameter.
 - Added permutation-based FDR thresholding (`run_scion(permute = TRUE)`, `permute_network()`, `compute_fdr_threshold()`), with an interactive FDR curve and adjustable cutoff in the app.
 - Added network visualization (`plot_network()`), both a static plot and an interactive one in the app; Cytoscape import is still available for large networks or publication figures.
+- Target/regulator/clustering matrices and gene lists now accept CSV, TSV, plain-text, or SSV (in addition to GCT), detected from the file extension -- not just CSV.
 - Legacy tutorial and test-data files moved to a `legacy/` folder; the SC-ION v3.2 vignette is kept for reference but is historical.
 
 # Version 4.2 - October 24, 2024

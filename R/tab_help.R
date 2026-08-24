@@ -17,7 +17,7 @@ helpTabUI <- function(id = "help") {
     help_item("Load example data", "Loads a real example dataset so you can try the app before
                uploading your own data."),
     help_item("Target matrix", "Your input data for the targets (e.g. transcript data). Rows are
-               genes, columns are samples. CSV or GCT format."),
+               genes, columns are samples. CSV, TSV, TXT, SSV, or GCT format."),
     help_item("Regulator matrix", "Your input data for the regulators (e.g. protein or PTM data).
                Same format as the target matrix. If a regulator name includes a PTM site
                (e.g. SOX2.S35), set the separator below."),

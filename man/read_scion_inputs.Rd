@@ -2,7 +2,7 @@
 % Please edit documentation in R/read_scion_inputs.R
 \name{read_scion_inputs}
 \alias{read_scion_inputs}
-\title{Read SCION input matrices from CSV or GCT files}
+\title{Read SCION input matrices from a delimited text format or GCT}
 \usage{
 read_scion_inputs(
   target_data_file,
@@ -16,11 +16,14 @@ read_scion_inputs(
 }
 \arguments{
 \item{target_data_file, reg_data_file}{path to target/regulator expression
-matrices. CSV: first column = gene names, remaining columns = samples.
-GCT: a GCT(x) file, read via \code{cmapR::parse_gctx()} (requires the optional
-\code{cmapR} package -- install with \code{BiocManager::install("cmapR")}).}
+matrices. Delimited text (first column = gene names, remaining columns =
+samples): \code{.csv} (comma), \code{.tsv}/\code{.txt} (tab), or \code{.ssv} (semicolon),
+dispatched by extension. GCT: a GCT(x) file, read via
+\code{cmapR::parse_gctx()} (requires the optional \code{cmapR} package -- install
+with \code{BiocManager::install("cmapR")}).}
 
-\item{target_genes_file, reg_genes_file}{optional path to a file listing which
+\item{target_genes_file, reg_genes_file}{optional path to a delimited text file
+(\code{.csv}/\code{.tsv}/\code{.txt}/\code{.ssv}, same extension dispatch as above) listing which
 genes to keep as targets/regulators (first column = gene names). \code{NULL}
 (default) keeps every gene present in the corresponding data file.}
 
@@ -31,16 +34,19 @@ Set to \code{FALSE} for a plain one-gene-symbol-per-line file with no header
 file would silently have its first gene misread as a column header and
 dropped.}
 
-\item{clustering_data_file}{optional path to a CSV clustering matrix (rows =
-genes, columns = samples), used by \code{\link[=cluster_genes]{cluster_genes()}}. Restricted to genes
-that appear in \code{target_genes_file} or \code{reg_genes_file} when those are given.}
+\item{clustering_data_file}{optional path to a delimited text clustering
+matrix (rows = genes, columns = samples; same extension dispatch as
+above), used by \code{\link[=cluster_genes]{cluster_genes()}}. Restricted to genes that appear in
+\code{target_genes_file} or \code{reg_genes_file} when those are given.}
 
 \item{format}{\code{"auto"} (default), \code{"csv"}, or \code{"gct"}. \code{"auto"} detects GCT(x)
-from \code{target_data_file}'s extension (\code{.gct}/\code{.gctx}) and falls back to CSV
-otherwise -- pass \code{"csv"}/\code{"gct"} explicitly to override. Regulator gene
-names may use either a dot (\code{SOX2.S35}) or underscore (\code{MEF2C_S453s})
-PTM-site convention; both are left as-is here (see the \code{ptm_sep} argument
-of \code{\link[=infer_network]{infer_network()}} for where the convention matters downstream).}
+from \code{target_data_file}'s extension (\code{.gct}/\code{.gctx}) and falls back to
+delimited text otherwise -- pass \code{"csv"}/\code{"gct"} explicitly to override
+(despite the name, \code{"csv"} covers any of the delimited text extensions
+above, not literally just \code{.csv}). Regulator gene names may use either a
+dot (\code{SOX2.S35}) or underscore (\code{MEF2C_S453s}) PTM-site convention; both
+are left as-is here (see the \code{ptm_sep} argument of \code{\link[=infer_network]{infer_network()}} for
+where the convention matters downstream).}
 }
 \value{
 a list with \code{target} and \code{reg} data frames (genes as rows, samples as

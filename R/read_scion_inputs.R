@@ -1,4 +1,4 @@
-#' Read SCION input matrices from CSV or GCT files
+#' Read SCION input matrices from a delimited text format or GCT
 #'
 #' Reads target and regulator expression matrices (and, optionally, a separate
 #' clustering matrix), restricts each to a gene list if provided, and drops any
@@ -7,10 +7,13 @@
 #' all-or-nothing drop.
 #'
 #' @param target_data_file,reg_data_file path to target/regulator expression
-#'   matrices. CSV: first column = gene names, remaining columns = samples.
-#'   GCT: a GCT(x) file, read via `cmapR::parse_gctx()` (requires the optional
-#'   `cmapR` package -- install with `BiocManager::install("cmapR")`).
-#' @param target_genes_file,reg_genes_file optional path to a file listing which
+#'   matrices. Delimited text (first column = gene names, remaining columns =
+#'   samples): `.csv` (comma), `.tsv`/`.txt` (tab), or `.ssv` (semicolon),
+#'   dispatched by extension. GCT: a GCT(x) file, read via
+#'   `cmapR::parse_gctx()` (requires the optional `cmapR` package -- install
+#'   with `BiocManager::install("cmapR")`).
+#' @param target_genes_file,reg_genes_file optional path to a delimited text file
+#'   (`.csv`/`.tsv`/`.txt`/`.ssv`, same extension dispatch as above) listing which
 #'   genes to keep as targets/regulators (first column = gene names). `NULL`
 #'   (default) keeps every gene present in the corresponding data file.
 #' @param gene_list_header whether `target_genes_file`/`reg_genes_file` have a
@@ -19,15 +22,18 @@
 #'   (e.g. PANOPLY's `TF_file` convention) -- with the default `TRUE`, such a
 #'   file would silently have its first gene misread as a column header and
 #'   dropped.
-#' @param clustering_data_file optional path to a CSV clustering matrix (rows =
-#'   genes, columns = samples), used by [cluster_genes()]. Restricted to genes
-#'   that appear in `target_genes_file` or `reg_genes_file` when those are given.
+#' @param clustering_data_file optional path to a delimited text clustering
+#'   matrix (rows = genes, columns = samples; same extension dispatch as
+#'   above), used by [cluster_genes()]. Restricted to genes that appear in
+#'   `target_genes_file` or `reg_genes_file` when those are given.
 #' @param format `"auto"` (default), `"csv"`, or `"gct"`. `"auto"` detects GCT(x)
-#'   from `target_data_file`'s extension (`.gct`/`.gctx`) and falls back to CSV
-#'   otherwise -- pass `"csv"`/`"gct"` explicitly to override. Regulator gene
-#'   names may use either a dot (`SOX2.S35`) or underscore (`MEF2C_S453s`)
-#'   PTM-site convention; both are left as-is here (see the `ptm_sep` argument
-#'   of [infer_network()] for where the convention matters downstream).
+#'   from `target_data_file`'s extension (`.gct`/`.gctx`) and falls back to
+#'   delimited text otherwise -- pass `"csv"`/`"gct"` explicitly to override
+#'   (despite the name, `"csv"` covers any of the delimited text extensions
+#'   above, not literally just `.csv`). Regulator gene names may use either a
+#'   dot (`SOX2.S35`) or underscore (`MEF2C_S453s`) PTM-site convention; both
+#'   are left as-is here (see the `ptm_sep` argument of [infer_network()] for
+#'   where the convention matters downstream).
 #' @return a list with `target` and `reg` data frames (genes as rows, samples as
 #'   columns, row names made syntactically valid via [make.names()]), and
 #'   `cluster_data` (or `NULL` if `clustering_data_file` was not given).
@@ -47,17 +53,17 @@ read_scion_inputs <- function(target_data_file, reg_data_file, target_genes_file
     target_data <- as.data.frame(cmapR::parse_gctx(target_data_file)@mat)
     reg_data <- as.data.frame(cmapR::parse_gctx(reg_data_file)@mat)
   } else {
-    target_data <- utils::read.csv(target_data_file, row.names = 1)
-    reg_data <- utils::read.csv(reg_data_file, row.names = 1)
+    target_data <- read_delimited_matrix(target_data_file)
+    reg_data <- read_delimited_matrix(reg_data_file)
   }
 
   target_genes <- if (!is.null(target_genes_file)) {
-    utils::read.csv(target_genes_file, header = gene_list_header, stringsAsFactors = FALSE)
+    read_delimited(target_genes_file, header = gene_list_header)
   } else {
     NULL
   }
   reg_genes <- if (!is.null(reg_genes_file)) {
-    utils::read.csv(reg_genes_file, header = gene_list_header, stringsAsFactors = FALSE)
+    read_delimited(reg_genes_file, header = gene_list_header)
   } else {
     NULL
   }
@@ -82,7 +88,7 @@ read_scion_inputs <- function(target_data_file, reg_data_file, target_genes_file
 
   cluster_data <- NULL
   if (!is.null(clustering_data_file)) {
-    cluster_data <- utils::read.csv(clustering_data_file, row.names = 1)
+    cluster_data <- read_delimited_matrix(clustering_data_file)
     keep <- rep(TRUE, nrow(cluster_data))
     if (!is.null(target_genes) || !is.null(reg_genes)) {
       keep <- row.names(cluster_data) %in% c(
