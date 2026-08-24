@@ -10,6 +10,10 @@ If using SC-ION in your own work, please cite both this repository (using the DO
 
 Clark, N.M., Nolan, T.M., Wang, P. et al. Integrated omics networks reveal the temporal signaling events of brassinosteroid response in Arabidopsis. Nat Commun 12, 5858 (2021). https://doi.org/10.1038/s41467-021-26165-3
 
+# Also available via PANOPLY
+
+SCION is also available as a task within [PANOPLY](https://github.com/broadinstitute/PANOPLY), a suite of proteogenomic data analysis pipelines for Terra.
+
 # Installation
 
 ```r
