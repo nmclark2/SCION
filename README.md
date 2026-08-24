@@ -26,8 +26,7 @@ devtools::install_github("nmclark2/SCION")
 To use the Shiny app:
 
 ```r
-library(SCION)
-launchApp()
+SCION::launchApp()
 ```
 
 Click "Load example data" in the sidebar to try it with a real dataset before uploading your own.
