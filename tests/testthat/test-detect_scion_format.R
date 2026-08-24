@@ -1,10 +1,10 @@
 test_that("detect_scion_format() dispatches on file extension", {
-  expect_equal(detect_scion_format("target.csv"), "csv")
-  expect_equal(detect_scion_format("target.CSV"), "csv")
+  expect_equal(detect_scion_format("target.csv"), "delimited")
+  expect_equal(detect_scion_format("target.CSV"), "delimited")
   expect_equal(detect_scion_format("target.gct"), "gct")
   expect_equal(detect_scion_format("target.GCTX"), "gct")
-  expect_equal(detect_scion_format("target.tsv"), "csv") # not gct -> falls back to csv reading
-  expect_equal(detect_scion_format("target"), "csv") # no extension at all
+  expect_equal(detect_scion_format("target.tsv"), "delimited") # not gct -> falls back to delimited-text reading
+  expect_equal(detect_scion_format("target"), "delimited") # no extension at all
 })
 
 test_that("read_scion_inputs(format = 'auto') routes a .gct file through the GCT reader", {
