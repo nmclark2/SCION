@@ -42,7 +42,7 @@ plot_network <- function(edge_table, interactive = FALSE, ...) {
                          vertex.size = 8, vertex.frame.color = "#444444", edge.arrow.size = 0.4, ...)
     graphics::legend("topright", legend = c("Regulator", "Target"), pch = c(15, 19),
                       col = c(regulator_color, target_color), bty = "n", title = "Node type")
-    graphics::mtext("Edge width proportional to weight", side = 1, line = 4, cex = 0.8, col = "#555555")
+    graphics::mtext("Thicker edge = higher weight", side = 1, line = 4, cex = 0.8, col = "#555555")
     return(invisible(g))
   }
 
@@ -53,23 +53,52 @@ plot_network <- function(edge_table, interactive = FALSE, ...) {
   edges <- igraph::as_data_frame(g, what = "edges") # already has "from"/"to" columns
   edges$value <- rescale_for_plot(edges$Weight, 1, 10)
 
-  vis <- visNetwork::visNetwork(
-    nodes, edges,
-    submain = list(text = "Edge width proportional to weight",
-                    style = "font-size:13px;color:#555555;font-weight:normal;"),
-    ...
-  )
-  vis <- visNetwork::visNodes(vis, font = list(size = 16, color = "#1a1a1a"))
+  vis <- visNetwork::visNetwork(nodes, edges, ...)
+  vis <- visNetwork::visNodes(vis, font = list(size = 22, color = "#1a1a1a"))
   vis <- visNetwork::visGroups(vis, groupname = "Regulator", shape = "square",
                                 color = list(background = regulator_color, border = "#2c4a75",
                                              highlight = "#6f97d6"))
   vis <- visNetwork::visGroups(vis, groupname = "Target", shape = "dot",
                                 color = list(background = target_color, border = "#a8622f",
                                              highlight = "#f0a878"))
-  vis <- visNetwork::visLegend(vis, useGroups = TRUE, main = "Node type", width = 0.3)
   vis <- visNetwork::visInteraction(vis, navigationButtons = TRUE, keyboard = TRUE, zoomView = TRUE,
                                      dragView = TRUE)
-  visNetwork::visEdges(vis, arrows = "to")
+  vis <- visNetwork::visEdges(vis, arrows = "to")
+  # visLegend() renders its own separate, independently zoomable vis.js canvas --
+  # at typical widget sizes that reads as a comically oversized, pointlessly
+  # interactive legend. A plain static HTML/CSS caption has no such quirks.
+  # NOTE: htmlwidgets::prependContent() correctly attaches this to the widget
+  # object (confirmed via htmlwidgets::saveWidget()), but Shiny's
+  # renderVisNetwork()/visNetworkOutput() binding does not transmit prepend/
+  # append content to the client -- it's dropped somewhere in that
+  # serialization path. It still renders fine for standalone/non-Shiny use
+  # (R Markdown, saveWidget()), so it stays here; the Shiny app additionally
+  # renders network_legend_html() as its own independent UI element
+  # (see tab_visualize.R) so the legend is guaranteed to show up there too.
+  htmlwidgets::prependContent(vis, network_legend_html(regulator_color, target_color))
+}
+
+#' @keywords internal
+network_legend_html <- function(regulator_color = "#4C72B0", target_color = "#DD8452") {
+  htmltools::div(
+    style = paste("display:flex; flex-wrap:wrap; align-items:center; gap:16px;",
+                  "font-size:13px; color:#333; padding:4px 2px 8px 2px;"),
+    htmltools::div(
+      style = "display:flex; align-items:center; gap:6px;",
+      htmltools::tags$span(style = sprintf(
+        "display:inline-block; width:13px; height:13px; background:%s;", regulator_color
+      )),
+      "Regulator"
+    ),
+    htmltools::div(
+      style = "display:flex; align-items:center; gap:6px;",
+      htmltools::tags$span(style = sprintf(
+        "display:inline-block; width:13px; height:13px; border-radius:50%%; background:%s;", target_color
+      )),
+      "Target"
+    ),
+    htmltools::div(style = "color:#555;", "Edge width -> weight (thicker = higher)")
+  )
 }
 
 #' @keywords internal
@@ -77,5 +106,14 @@ rescale_for_plot <- function(x, lo, hi) {
   if (length(unique(x)) <= 1) {
     return(rep(mean(c(lo, hi)), length(x)))
   }
-  lo + (hi - lo) * (x - min(x)) / (max(x) - min(x))
+  # rank-based (percentile), not a raw linear min-max: a SCION network is
+  # normally already thresholded (by weight cutoff or FDR), so the *retained*
+  # edges' raw weights are naturally clustered in a narrow high band -- a
+  # linear rescale of that narrow band squashes nearly all of them toward one
+  # end of [lo, hi], making "thicker = higher weight" invisible for all but a
+  # few outliers. Scaling by each edge's percentile rank instead spreads the
+  # same edges evenly across the full width range regardless of how skewed
+  # the raw weights are.
+  pct <- (rank(x, ties.method = "average") - 1) / (length(x) - 1)
+  lo + (hi - lo) * pct
 }

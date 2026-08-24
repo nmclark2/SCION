@@ -13,34 +13,21 @@
 #' @param K number of candidate regulators considered at each tree split: `"sqrt"`,
 #'   `"all"`, or an integer.
 #' @param nb.trees number of trees per random forest.
-#' @param importance.measure `"IncNodePurity"` or `"%IncMSE"` (randomForest engine);
-#'   mapped to `"impurity"`/`"permutation"` respectively when `engine = "ranger"`.
+#' @param importance.measure `"IncNodePurity"` or `"%IncMSE"`.
 #' @param seed optional RNG seed for the top-level per-target seed draw. Must be
 #'   set consistently between a real network and its permutations for the
 #'   permutation seeding scheme in [permute_network()] to be reproducible.
-#' @param trace if `TRUE`, emit a progress message per target gene (randomForest
-#'   engine only).
+#' @param trace if `TRUE`, emit a progress message per target gene.
 #' @param normalize if `TRUE`, rescale the weight matrix to `[0, 1]`.
-#' @param num.cores number of cores to use. For `engine = "randomForest"`, a
-#'   `num.cores - 1` FORK cluster is used to parallelize across target genes
-#'   (disabled when `num.cores <= 2`). For `engine = "ranger"`, target genes are
-#'   processed serially and `num.cores` is instead passed to each ranger fit's
-#'   own internal thread parallelism, since nesting FORK-based parallelism
-#'   around an already-multithreaded ranger call would oversubscribe cores.
-#' @param engine `"randomForest"` (default) or `"ranger"`. **Must be the same for
-#'   a real network and every one of its permutations** -- the FDR calculation in
-#'   [compute_fdr_threshold()] rank-matches edge weights between the real and
-#'   permuted networks, which is only valid when they come from the same engine.
-#' @param ... additional arguments passed to the underlying random forest call.
+#' @param num.cores number of cores to use: a `num.cores - 1` FORK cluster is
+#'   used to parallelize across target genes (disabled when `num.cores <= 2`).
+#' @param ... additional arguments passed to `randomForest::randomForest()`.
 #' @return a numeric matrix of edge weights (targets x regulators), or `NULL` if
 #'   there are no targets or no regulators.
 #' @export
 RS.Get.Weight.Matrix <- function(target.matrix, input.matrix, K = "sqrt", nb.trees = 10000,
                                   importance.measure = "%IncMSE", seed = NULL, trace = TRUE,
-                                  normalize = TRUE, num.cores = 1,
-                                  engine = c("randomForest", "ranger"), ...) {
-  engine <- match.arg(engine)
-
+                                  normalize = TRUE, num.cores = 1, ...) {
   if (!is.null(seed)) {
     set.seed(seed)
   }
@@ -85,15 +72,7 @@ RS.Get.Weight.Matrix <- function(target.matrix, input.matrix, K = "sqrt", nb.tre
   # the same whichever worker fits it -- and whether or not there is a worker at all
   target.seeds <- stats::setNames(sample.int(.Machine$integer.max, length(target.names)), target.names)
 
-  if (engine == "ranger") {
-    # ranger parallelizes internally (num.threads); looping across targets in an
-    # outer FORK cluster on top of that would oversubscribe cores, so we process
-    # targets serially here and let ranger fan out within each fit instead.
-    imList <- lapply(target.names, function(x) {
-      rsgwm2_ranger(x, target.matrix, input.matrix, mtry, nb.trees, importance.measure,
-                    seed = target.seeds[[x]], num.threads = num.cores, ...)
-    })
-  } else if (num.cores > 2) {
+  if (num.cores > 2) {
     clst <- parallel::makeCluster(num.cores - 1, type = "FORK", outfile = "log.txt")
     doParallel::registerDoParallel(clst)
     imList <- parallel::parLapply(cl = clst, X = target.names, function(x) {
@@ -151,17 +130,4 @@ rsgwm2_randomforest <- function(target.gene.name, num.targets, target.names, inp
   rf <- randomForest::randomForest(x = x, y = y, mtry = mtry, ntree = nb.trees,
                                     keep.forest = FALSE, importance = TRUE, ...)
   randomForest::importance(rf)[, importance.measure]
-}
-
-#' @keywords internal
-rsgwm2_ranger <- function(target.gene.name, target.matrix, input.matrix, mtry, nb.trees,
-                           importance.measure, seed = NULL, num.threads = 1, ...) {
-  x <- input.matrix
-  y <- target.matrix[, target.gene.name]
-  ranger_importance <- if (importance.measure == "IncNodePurity") "impurity" else "permutation"
-
-  rf <- ranger::ranger(x = x, y = y, mtry = mtry, num.trees = nb.trees,
-                       importance = ranger_importance, num.threads = num.threads,
-                       seed = seed, ...)
-  rf$variable.importance
 }

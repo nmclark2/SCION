@@ -4,10 +4,10 @@ test_that("permute_network(indices=) runs a single permutation matching the equi
 
   full_run <- permute_network(mats$target, mats$reg, n_permutations = 3, num.cores = 1,
                                weightthreshold = 0, normalize = FALSE, connect_hubs = FALSE,
-                               engine = "randomForest", nb.trees = 50, trace = FALSE)
+                               nb.trees = 50, trace = FALSE)
   one_task <- permute_network(mats$target, mats$reg, indices = 2, num.cores = 1,
                                weightthreshold = 0, normalize = FALSE, connect_hubs = FALSE,
-                               engine = "randomForest", nb.trees = 50, trace = FALSE)
+                               nb.trees = 50, trace = FALSE)
 
   expect_equal(names(one_task), "2")
   expect_equal(one_task[["2"]], full_run[["2"]])
@@ -23,7 +23,7 @@ test_that("save_permutation()/load_permutations() round-trip an HPC-array-style 
   for (task_id in c(3, 1, 2)) { # out of order, as array tasks might finish
     perm <- permute_network(mats$target, mats$reg, indices = task_id, num.cores = 1,
                              weightthreshold = 0, normalize = FALSE, connect_hubs = FALSE,
-                             engine = "randomForest", nb.trees = 50, trace = FALSE)[[1]]
+                             nb.trees = 50, trace = FALSE)[[1]]
     save_permutation(perm, task_id, dir = tmp_dir)
   }
 
@@ -32,6 +32,6 @@ test_that("save_permutation()/load_permutations() round-trip an HPC-array-style 
 
   direct <- permute_network(mats$target, mats$reg, indices = 1:3, num.cores = 1,
                              weightthreshold = 0, normalize = FALSE, connect_hubs = FALSE,
-                             engine = "randomForest", nb.trees = 50, trace = FALSE)
+                             nb.trees = 50, trace = FALSE)
   expect_equal(loaded, direct)
 })

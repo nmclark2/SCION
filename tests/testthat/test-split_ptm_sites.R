@@ -46,7 +46,7 @@ test_that("infer_network splits PTM regulators in its returned edge table", {
   colnames(target) <- colnames(reg) <- paste0("sample", seq_len(n_samples))
 
   net <- infer_network(target, reg, weightthreshold = -Inf, normalize = FALSE, num.cores = 1,
-                        engine = "randomForest", ptm_sep = ".", nb.trees = 10, trace = FALSE)
+                        ptm_sep = ".", nb.trees = 10, trace = FALSE)
 
   expect_true("Site" %in% names(net))
   expect_true(all(net$Regulator %in% c("SOX2", "OCT4")))

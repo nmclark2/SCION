@@ -30,10 +30,6 @@ app_UI <- function(request) {
          .main-sidebar h5, .main-sidebar h6 {
            color: #333333;
          }
-         .main-sidebar .sidebar {
-           height: calc(100vh - 50px);
-           overflow-y: auto;
-         }
          .main-sidebar .form-group {
            margin-bottom: 6px;
          }
@@ -42,6 +38,27 @@ app_UI <- function(request) {
          }
          .main-sidebar .checkbox, .main-sidebar .radio {
            margin-top: 0; margin-bottom: 6px;
+         }
+         .main-sidebar hr {
+           margin-top: 10px; margin-bottom: 10px;
+         }
+         /* shinydashboard's own CSS pads .shiny-input-container (i.e. every
+            selectInput/checkboxInput/etc.) with 15px left/right -- but our
+            own uiOutput() blocks (the download-network button, the
+            \"using bundled clustering matrix\" note, etc.) render as a plain
+            .shiny-html-output, which gets no such padding, leaving their
+            content flush against the sidebar edge unlike everything else. */
+         .main-sidebar .sidebar > .shiny-html-output,
+         .main-sidebar .sidebar .shiny-panel-conditional > .shiny-html-output {
+           padding-left: 15px; padding-right: 15px;
+         }
+         /* Shiny's actionButton()/downloadButton() `class` arg only ADDS a
+            class -- the default \"btn-default\" stays too, and shinydashboard's
+            own AdminLTE stylesheet loads after Bootstrap's, so its
+            .btn-default text color (dark gray) wins the tiebreak over
+            Bootstrap's intended white-on-blue .btn-primary/.btn-info text. */
+         .btn-primary, .btn-info {
+           color: #ffffff !important;
          }
          .scion-tooltip {
            position: relative;

@@ -23,6 +23,11 @@ info_tooltip <- function(...) {
 runSidebarUI <- function(id = "run") {
   ns <- shiny::NS(id)
   shiny::tagList(
+    # at the very top, not after the run configuration -- blank until a run
+    # completes; run_and_report() then scrolls the sidebar back to top (the
+    # user's scroll position is typically at the bottom, having just clicked
+    # "Run network" down there) so this is immediately visible, no scrolling
+    shiny::uiOutput(ns("status")),
     shiny::selectInput(ns("example_regulator_type"), "Example regulator type",
                         choices = c("Protein" = "protein", "Phospho" = "phospho"),
                         selected = "protein"),
@@ -39,7 +44,10 @@ runSidebarUI <- function(id = "run") {
       condition = sprintf("input['%s'] != 'none' && input['%s'] != 'upload'",
                            ns("clustering_method"), ns("clustering_method")),
       shiny::uiOutput(ns("clustering_data_input")),
-      shiny::numericInput(ns("clustering_threshold"), "Clustering threshold", value = 0.5, min = 0, step = 0.1)
+      shiny::numericInput(ns("clustering_threshold"),
+                           shiny::tagList("Clustering threshold", info_tooltip(
+                             "Not used for k-means clustering."
+                           )), value = 0.5, min = 0, step = 0.1)
     ),
     shiny::conditionalPanel(
       condition = sprintf("input['%s'] == 'upload'", ns("clustering_method")),
@@ -48,10 +56,8 @@ runSidebarUI <- function(id = "run") {
     shiny::checkboxInput(ns("connect_hubs"), "Connect cluster hubs", value = TRUE),
     shiny::checkboxInput(ns("normalize"),
                           shiny::tagList("Normalize edge weights", info_tooltip(
-                            "Locked off during permutations -- it would cap every permutation's top weight at 1."
+                            "Not available when running permutations."
                           )), value = TRUE),
-    shiny::selectInput(ns("engine"), "Random forest engine", choices = c("randomForest", "ranger"),
-                        selected = "randomForest"),
     shiny::textInput(ns("ptm_sep"), "PTM site separator", value = "."),
     shiny::numericInput(ns("num_cores"), "Number of cores", value = 1, min = 1, step = 1),
     shiny::numericInput(ns("seed"), "Random seed", value = 2020, step = 1),
@@ -63,9 +69,7 @@ runSidebarUI <- function(id = "run") {
       shiny::numericInput(ns("base_seed"), "Base seed", value = 0, step = 1),
       shiny::numericInput(ns("target_fdr"), "Target FDR", value = 0.05, min = 0, max = 1, step = 0.01)
     ),
-    shiny::actionButton(ns("run"), "Run network", icon = shiny::icon("play"), class = "btn-primary"),
-    shiny::hr(),
-    shiny::uiOutput(ns("status"))
+    shiny::actionButton(ns("run"), "Run network", icon = shiny::icon("play"), class = "btn-primary")
   )
 }
 
@@ -148,6 +152,13 @@ runSidebarServer <- function(id = "run", parent_session) {
           }
           shiny::showNotification(msg, type = "message", duration = 8)
           shiny::updateNavbarPage(parent_session, "navbar-tabs", selected = "diagnostics")
+          # the status/download block lives at the top of the sidebar, but the
+          # user's scroll position is typically at the bottom (they just
+          # clicked "Run network" down there) -- scroll back up so it's
+          # actually visible instead of requiring a manual scroll to find it.
+          # The sidebar and main content share a single page-level scrollbar
+          # (see app_UI()), so scrolling the window back to the top is enough.
+          shinyjs::runjs("window.scrollTo(0, 0);")
         }
       })
     }
@@ -168,7 +179,6 @@ runSidebarServer <- function(id = "run", parent_session) {
         shiny::updateCheckboxInput(session, "normalize", value = TRUE)
       }
       shiny::updateCheckboxInput(session, "connect_hubs", value = TRUE)
-      shiny::updateSelectInput(session, "engine", selected = "randomForest")
       shiny::updateTextInput(session, "ptm_sep", value = ".")
       shiny::updateNumericInput(session, "seed", value = 2020)
       shiny::showNotification(
@@ -196,6 +206,17 @@ runSidebarServer <- function(id = "run", parent_session) {
         shiny::updateCheckboxInput(session, "normalize", value = normalize_before_permute())
       }
     }, ignoreInit = TRUE)
+
+    # k-means picks its own number of clusters from the data's dimensions
+    # instead of using a threshold -- gray the field out rather than leaving
+    # it settable but silently ignored.
+    shiny::observeEvent(input$clustering_method, {
+      if (identical(input$clustering_method, "kmeans")) {
+        shinyjs::disable("clustering_threshold")
+      } else {
+        shinyjs::enable("clustering_threshold")
+      }
+    })
 
     # uploading your own file stops using the example data
     shiny::observeEvent(input$target_data_file, using_example_data(FALSE), ignoreInit = TRUE)
@@ -279,7 +300,6 @@ runSidebarServer <- function(id = "run", parent_session) {
         weightthreshold = 0,
         normalize = input$normalize,
         num.cores = input$num_cores,
-        engine = input$engine,
         ptm_sep = input$ptm_sep,
         seed = input$seed,
         permute = input$run_permutations,
@@ -290,24 +310,18 @@ runSidebarServer <- function(id = "run", parent_session) {
       ))
     })
 
+    # just the download button -- edge/cluster/FDR counts are already shown
+    # (and kept up to date) on the Network Diagnostics tab itself, so
+    # repeating them here would be redundant
     output$status <- shiny::renderUI({
       res <- network_result()
       if (is.null(res)) {
         return(NULL)
       }
-      shiny::tagList(
-        shiny::strong(sprintf("%d edges", nrow(res$network))),
-        if (!is.null(res$cluster_assignment)) {
-          shiny::p(sprintf("%d clusters", max(res$cluster_assignment$clusters)))
-        },
-        if (!is.null(res$fdr_result)) {
-          shiny::p(sprintf(
-            "FDR threshold: %s (%d edges kept) -- see the Network Diagnostics tab.",
-            if (is.na(res$fdr_result$threshold)) "not reached" else signif(res$fdr_result$threshold, 4),
-            nrow(res$network_thresholded)
-          ))
-        },
-        shiny::downloadButton(ns("download_full"), "Download full network")
+      shiny::div(
+        style = "padding-top: 15px;",
+        shiny::downloadButton(ns("download_full"), "Download full network", class = "btn-primary"),
+        shiny::hr()
       )
     })
 

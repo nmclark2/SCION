@@ -11,7 +11,7 @@ pick_hub_genes(edge_table)
 }
 \value{
 a character vector of regulator names with the maximum out-degree
-(length > 1 if there is a tie).
+(length > 1 if there is a tie), or \code{character(0)} if \code{edge_table} has no rows.
 }
 \description{
 Pick the hub gene(s) (highest out-degree regulator) from an edge table

@@ -14,7 +14,6 @@ RS.Get.Weight.Matrix(
   trace = TRUE,
   normalize = TRUE,
   num.cores = 1,
-  engine = c("randomForest", "ranger"),
   ...
 )
 }
@@ -30,31 +29,20 @@ as rows, genes as columns.}
 
 \item{nb.trees}{number of trees per random forest.}
 
-\item{importance.measure}{\code{"IncNodePurity"} or \code{"\%IncMSE"} (randomForest engine);
-mapped to \code{"impurity"}/\code{"permutation"} respectively when \code{engine = "ranger"}.}
+\item{importance.measure}{\code{"IncNodePurity"} or \code{"\%IncMSE"}.}
 
 \item{seed}{optional RNG seed for the top-level per-target seed draw. Must be
 set consistently between a real network and its permutations for the
 permutation seeding scheme in \code{\link[=permute_network]{permute_network()}} to be reproducible.}
 
-\item{trace}{if \code{TRUE}, emit a progress message per target gene (randomForest
-engine only).}
+\item{trace}{if \code{TRUE}, emit a progress message per target gene.}
 
 \item{normalize}{if \code{TRUE}, rescale the weight matrix to \verb{[0, 1]}.}
 
-\item{num.cores}{number of cores to use. For \code{engine = "randomForest"}, a
-\code{num.cores - 1} FORK cluster is used to parallelize across target genes
-(disabled when \code{num.cores <= 2}). For \code{engine = "ranger"}, target genes are
-processed serially and \code{num.cores} is instead passed to each ranger fit's
-own internal thread parallelism, since nesting FORK-based parallelism
-around an already-multithreaded ranger call would oversubscribe cores.}
+\item{num.cores}{number of cores to use: a \code{num.cores - 1} FORK cluster is
+used to parallelize across target genes (disabled when \code{num.cores <= 2}).}
 
-\item{engine}{\code{"randomForest"} (default) or \code{"ranger"}. \strong{Must be the same for
-a real network and every one of its permutations} -- the FDR calculation in
-\code{\link[=compute_fdr_threshold]{compute_fdr_threshold()}} rank-matches edge weights between the real and
-permuted networks, which is only valid when they come from the same engine.}
-
-\item{...}{additional arguments passed to the underlying random forest call.}
+\item{...}{additional arguments passed to \code{randomForest::randomForest()}.}
 }
 \value{
 a numeric matrix of edge weights (targets x regulators), or \code{NULL} if

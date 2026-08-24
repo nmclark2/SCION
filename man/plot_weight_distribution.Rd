@@ -4,13 +4,34 @@
 \alias{plot_weight_distribution}
 \title{Plot the distribution of edge weights in a network}
 \usage{
-plot_weight_distribution(network, bins = 100)
+plot_weight_distribution(
+  network,
+  bins = 100,
+  cutoff = NULL,
+  title = NULL,
+  label_line = FALSE
+)
 }
 \arguments{
 \item{network}{an edge table with a \code{Weight} column, e.g. the \code{network}
-element of \code{\link[=run_scion]{run_scion()}}'s result.}
+element of \code{\link[=run_scion]{run_scion()}}'s result. Always pass the full, unthresholded
+network here (not an already-filtered one) so \code{cutoff} is visible in
+context against the whole distribution.}
 
 \item{bins}{number of histogram bins.}
+
+\item{cutoff}{optional edge-weight cutoff (FDR-based or manual) to mark
+with a dashed vertical line. \code{NULL} (default) or \code{NA} draws no line.}
+
+\item{title}{optional plot title -- \code{NULL} (default) omits it. The
+interactive app view skips this (its box header already names the plot);
+\code{\link[=save_diagnostic_plots]{save_diagnostic_plots()}} and the app's PDF export set one, since an
+exported plot has no other title to identify it by.}
+
+\item{label_line}{if \code{FALSE} (default), the cutoff line carries its value
+as plotly hover text only (via \code{\link[plotly:ggplotly]{plotly::ggplotly()}}) -- appropriate for
+the interactive app. If \code{TRUE}, also draws the value as permanent on-plot
+text, for contexts with no hover available (the static PDF export).}
 }
 \value{
 a \code{ggplot2} object.

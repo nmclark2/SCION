@@ -4,12 +4,14 @@
 \alias{plot_outdegree_distribution}
 \title{Plot the distribution of regulator out-degrees in a network}
 \usage{
-plot_outdegree_distribution(network, bins = 30)
+plot_outdegree_distribution(network, bins = 30, title = NULL)
 }
 \arguments{
 \item{network}{an edge table with a \code{Regulator} column.}
 
 \item{bins}{number of histogram bins.}
+
+\item{title}{optional plot title -- see \code{\link[=plot_weight_distribution]{plot_weight_distribution()}}'s \code{title} argument.}
 }
 \value{
 a \code{ggplot2} object.

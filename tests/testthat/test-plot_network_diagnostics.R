@@ -22,8 +22,10 @@ test_that("plot_weight_distribution() adds a cutoff line only when cutoff is giv
   network <- data.frame(Regulator = "r1", Target = c("t1", "t2"), Weight = c(0.5, 0.9),
                          stringsAsFactors = FALSE)
 
+  # the cutoff is drawn as a dense geom_line() (not geom_vline()) so it stays
+  # hoverable along its whole length in the interactive app -- see hover_line()
   is_vline_layer <- function(p) {
-    any(vapply(p$layers, function(l) inherits(l$geom, "GeomVline"), logical(1)))
+    any(vapply(p$layers, function(l) inherits(l$geom, "GeomLine"), logical(1)))
   }
 
   expect_false(is_vline_layer(plot_weight_distribution(network)))

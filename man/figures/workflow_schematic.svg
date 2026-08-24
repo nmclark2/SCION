@@ -1,0 +1,191 @@
+<svg viewBox="0 0 1360 710" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif">
+
+  <defs>
+    <marker id="arrow-blue" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#4C72B0"/>
+    </marker>
+    <marker id="arrow-orange" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#DD8452"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#55A868"/>
+    </marker>
+    <marker id="arrow-gray" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#999999"/>
+    </marker>
+    <marker id="arrow-dark" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="9" markerHeight="9" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#333333"/>
+    </marker>
+    <!-- dedicated, smaller marker for box-to-box flow arrows only, kept
+         separate from the icon-internal arrow-* markers above so this size
+         is the same for every box-connecting arrow, solid or dashed. -->
+    <marker id="flow-dark" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5.5" markerHeight="5.5" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#333333"/>
+    </marker>
+    <marker id="flow-gray" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5.5" markerHeight="5.5" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#999999"/>
+    </marker>
+  </defs>
+
+
+  <style>
+    .caption { font-size: 24px; font-weight: 700; fill: #222222; text-anchor: middle; }
+    .note { font-size: 14px; font-style: italic; fill: #666666; text-anchor: middle; }
+    .small { font-size: 14px; fill: #555555; }
+    .box { fill: #ffffff; stroke: #cccccc; stroke-width: 2; }
+    .box-optional { fill: #f5f5f5; stroke: #999999; stroke-width: 2; stroke-dasharray: 8,6; }
+  </style>
+  <rect x="0" y="0" width="1360" height="710" fill="#ffffff"/>
+
+<text class="caption" x="170.0" y="40"><tspan x="170.0" dy="0">Input target &amp;</tspan><tspan x="170.0" dy="26">regulator data</tspan></text>
+<rect class="box" x="40" y="90" width="260" height="210" rx="10"/>
+<rect x="65" y="125" width="72" height="95" rx="4" fill="none" stroke="#4C72B0" stroke-width="3"/>
+<line x1="89.0" y1="125" x2="89.0" y2="220" stroke="#4C72B0" stroke-width="1.5"/>
+<line x1="113.0" y1="125" x2="113.0" y2="220" stroke="#4C72B0" stroke-width="1.5"/>
+<line x1="65" y1="148.8" x2="137" y2="148.8" stroke="#4C72B0" stroke-width="1.5"/>
+<line x1="65" y1="172.5" x2="137" y2="172.5" stroke="#4C72B0" stroke-width="1.5"/>
+<line x1="65" y1="196.2" x2="137" y2="196.2" stroke="#4C72B0" stroke-width="1.5"/>
+<text class="small" x="101" y="238" text-anchor="middle">Regulators</text>
+<rect x="203" y="125" width="72" height="95" rx="4" fill="none" stroke="#DD8452" stroke-width="3"/>
+<line x1="227.0" y1="125" x2="227.0" y2="220" stroke="#DD8452" stroke-width="1.5"/>
+<line x1="251.0" y1="125" x2="251.0" y2="220" stroke="#DD8452" stroke-width="1.5"/>
+<line x1="203" y1="148.8" x2="275" y2="148.8" stroke="#DD8452" stroke-width="1.5"/>
+<line x1="203" y1="172.5" x2="275" y2="172.5" stroke="#DD8452" stroke-width="1.5"/>
+<line x1="203" y1="196.2" x2="275" y2="196.2" stroke="#DD8452" stroke-width="1.5"/>
+<text class="small" x="239" y="238" text-anchor="middle">Targets</text>
+<line x1="139.0" y1="172.0" x2="199.0" y2="172.0" stroke="#333333" stroke-width="4" marker-end="url(#flow-dark)"/>
+<text class="note" x="170.0" y="286"><tspan x="170.0" dy="0">e.g. protein/PTM -&gt; transcript</tspan></text>
+<text class="caption" x="510.0" y="40"><tspan x="510.0" dy="0">Cluster genes</tspan><tspan x="510.0" dy="26">(optional)</tspan></text>
+<rect class="box" x="380" y="90" width="260" height="210" rx="10"/>
+<circle cx="440" cy="135" r="11" fill="#4C72B0"/>
+<circle cx="465" cy="123" r="11" fill="#4C72B0"/>
+<circle cx="450" cy="158" r="11" fill="#4C72B0"/>
+<circle cx="475" cy="148" r="11" fill="#4C72B0"/>
+<circle cx="560" cy="130" r="11" fill="#DD8452"/>
+<circle cx="585" cy="140" r="11" fill="#DD8452"/>
+<circle cx="570" cy="158" r="11" fill="#DD8452"/>
+<circle cx="545" cy="153" r="11" fill="#DD8452"/>
+<circle cx="480" cy="210" r="11" fill="#55A868"/>
+<circle cx="510" cy="223" r="11" fill="#55A868"/>
+<circle cx="535" cy="205" r="11" fill="#55A868"/>
+<text class="note" x="510.0" y="268"><tspan x="510.0" dy="0">temporal (DTW) or</tspan><tspan x="510.0" dy="18">non-temporal (ICA/k-means)</tspan></text>
+<text class="caption" x="850.0" y="40"><tspan x="850.0" dy="0">Infer network</tspan><tspan x="850.0" dy="26">per cluster</tspan></text>
+<rect class="box" x="720" y="90" width="260" height="210" rx="10" fill="#eef2f9" stroke="#cccccc"/>
+<line x1="765.0" y1="120.0" x2="740.9" y2="163.0" stroke="#4C72B0" stroke-width="2" marker-end="url(#arrow-blue)"/>
+<line x1="765.0" y1="120.0" x2="789.1" y2="163.0" stroke="#4C72B0" stroke-width="2" marker-end="url(#arrow-blue)"/>
+<circle cx="765" cy="120" r="7" fill="white" stroke="#4C72B0" stroke-width="2"/>
+<circle cx="737" cy="170" r="6" fill="white" stroke="#4C72B0" stroke-width="2"/>
+<circle cx="793" cy="170" r="6" fill="white" stroke="#4C72B0" stroke-width="2"/>
+<line x1="850.0" y1="112.0" x2="825.4" y2="139.1" stroke="#DD8452" stroke-width="2" marker-end="url(#arrow-orange)"/>
+<line x1="850.0" y1="112.0" x2="862.1" y2="142.6" stroke="#DD8452" stroke-width="2" marker-end="url(#arrow-orange)"/>
+<line x1="865.0" y1="150.0" x2="853.2" y2="177.6" stroke="#DD8452" stroke-width="2" marker-end="url(#arrow-orange)"/>
+<line x1="865.0" y1="150.0" x2="881.0" y2="178.1" stroke="#DD8452" stroke-width="2" marker-end="url(#arrow-orange)"/>
+<circle cx="850" cy="112" r="7" fill="white" stroke="#DD8452" stroke-width="2"/>
+<circle cx="865" cy="150" r="7" fill="white" stroke="#DD8452" stroke-width="2"/>
+<circle cx="820" cy="145" r="6" fill="white" stroke="#DD8452" stroke-width="2"/>
+<circle cx="850" cy="185" r="6" fill="white" stroke="#DD8452" stroke-width="2"/>
+<circle cx="885" cy="185" r="6" fill="white" stroke="#DD8452" stroke-width="2"/>
+<line x1="935.0" y1="118.0" x2="907.1" y2="165.1" stroke="#55A868" stroke-width="2" marker-end="url(#arrow-green)"/>
+<line x1="935.0" y1="118.0" x2="935.0" y2="172.0" stroke="#55A868" stroke-width="2" marker-end="url(#arrow-green)"/>
+<line x1="935.0" y1="118.0" x2="962.9" y2="165.1" stroke="#55A868" stroke-width="2" marker-end="url(#arrow-green)"/>
+<circle cx="935" cy="118" r="7" fill="white" stroke="#55A868" stroke-width="2"/>
+<circle cx="903" cy="172" r="6" fill="white" stroke="#55A868" stroke-width="2"/>
+<circle cx="935" cy="180" r="6" fill="white" stroke="#55A868" stroke-width="2"/>
+<circle cx="967" cy="172" r="6" fill="white" stroke="#55A868" stroke-width="2"/>
+<text class="note" x="850.0" y="268"><tspan x="850.0" dy="0">random-forest regression</tspan><tspan x="850.0" dy="18">(GENIE3-style)</tspan></text>
+<text class="caption" x="1190.0" y="40"><tspan x="1190.0" dy="0">Connect cluster</tspan><tspan x="1190.0" dy="26">hubs</tspan></text>
+<rect class="box" x="1060" y="90" width="260" height="210" rx="10"/>
+<line x1="1115.0" y1="125.0" x2="1081.1" y2="105.5" stroke="#999999" stroke-width="1.5" marker-end="url(#arrow-gray)"/>
+<line x1="1115.0" y1="125.0" x2="1081.1" y2="144.5" stroke="#999999" stroke-width="1.5" marker-end="url(#arrow-gray)"/>
+<line x1="1265.0" y1="125.0" x2="1298.9" y2="105.5" stroke="#999999" stroke-width="1.5" marker-end="url(#arrow-gray)"/>
+<line x1="1265.0" y1="125.0" x2="1298.9" y2="144.5" stroke="#999999" stroke-width="1.5" marker-end="url(#arrow-gray)"/>
+<line x1="1190.0" y1="215.0" x2="1160.3" y2="240.4" stroke="#999999" stroke-width="1.5" marker-end="url(#arrow-gray)"/>
+<line x1="1190.0" y1="215.0" x2="1219.7" y2="240.4" stroke="#999999" stroke-width="1.5" marker-end="url(#arrow-gray)"/>
+<line x1="1115.0" y1="125.0" x2="1252.0" y2="125.0" stroke="#4C72B0" stroke-width="3" marker-end="url(#arrow-blue)"/>
+<line x1="1265.0" y1="125.0" x2="1198.3" y2="205.0" stroke="#4C72B0" stroke-width="3" marker-end="url(#arrow-blue)"/>
+<line x1="1190.0" y1="215.0" x2="1123.3" y2="135.0" stroke="#4C72B0" stroke-width="3" marker-end="url(#arrow-blue)"/>
+<circle cx="1075" cy="102" r="6" fill="#cccccc" stroke="#666666" stroke-width="1"/>
+<circle cx="1075" cy="148" r="6" fill="#cccccc" stroke="#666666" stroke-width="1"/>
+<circle cx="1305" cy="102" r="6" fill="#cccccc" stroke="#666666" stroke-width="1"/>
+<circle cx="1305" cy="148" r="6" fill="#cccccc" stroke="#666666" stroke-width="1"/>
+<circle cx="1155" cy="245" r="6" fill="#cccccc" stroke="#666666" stroke-width="1"/>
+<circle cx="1225" cy="245" r="6" fill="#cccccc" stroke="#666666" stroke-width="1"/>
+<circle cx="1115" cy="125" r="11" fill="#4C72B0" stroke="#2c4a75" stroke-width="1.5"/>
+<circle cx="1265" cy="125" r="11" fill="#4C72B0" stroke="#2c4a75" stroke-width="1.5"/>
+<circle cx="1190" cy="215" r="11" fill="#4C72B0" stroke="#2c4a75" stroke-width="1.5"/>
+<text class="note" x="1190.0" y="268"><tspan x="1190.0" dy="0">hub = each cluster's highest</tspan><tspan x="1190.0" dy="18">out-degree regulator</tspan></text>
+<path d="M 1190.0,300 L 1190.0,340 L 12,340 L 12,565 L 206.0,565" fill="none" stroke="#333333" stroke-width="4" marker-end="url(#flow-dark)"/>
+<text class="caption" x="340.0" y="420"><tspan x="340.0" dy="0">Threshold by</tspan><tspan x="340.0" dy="26">permutation FDR</tspan></text>
+<rect class="box" x="210.0" y="470" width="260" height="210" rx="10"/>
+<rect x="228.0" y="492" width="14" height="14" fill="#4C72B0" opacity="0.8"/>
+<text class="small" x="248.0" y="504">real</text>
+<rect x="320.0" y="492" width="14" height="14" fill="#999999" opacity="0.8"/>
+<text class="small" x="340.0" y="504">permuted</text>
+<rect x="230.0" y="610" width="24" height="35" fill="#999999" opacity="0.65"/>
+<rect x="256.0" y="595" width="24" height="50" fill="#999999" opacity="0.65"/>
+<rect x="282.0" y="593" width="24" height="52" fill="#999999" opacity="0.65"/>
+<rect x="308.0" y="597" width="24" height="48" fill="#999999" opacity="0.65"/>
+<rect x="334.0" y="601" width="24" height="44" fill="#999999" opacity="0.65"/>
+<rect x="360.0" y="607" width="24" height="38" fill="#999999" opacity="0.65"/>
+<rect x="386.0" y="615" width="24" height="30" fill="#999999" opacity="0.65"/>
+<rect x="230.0" y="545" width="24" height="100" fill="#4C72B0" opacity="0.65"/>
+<rect x="256.0" y="560" width="24" height="85" fill="#4C72B0" opacity="0.65"/>
+<rect x="282.0" y="590" width="24" height="55" fill="#4C72B0" opacity="0.65"/>
+<rect x="308.0" y="600" width="24" height="45" fill="#4C72B0" opacity="0.65"/>
+<rect x="334.0" y="607" width="24" height="38" fill="#4C72B0" opacity="0.65"/>
+<rect x="360.0" y="615" width="24" height="30" fill="#4C72B0" opacity="0.65"/>
+<rect x="386.0" y="623" width="24" height="22" fill="#4C72B0" opacity="0.65"/>
+<line x1="278.0" y1="530" x2="278.0" y2="647" stroke="#C44E52" stroke-width="2.5" stroke-dasharray="6,4"/>
+<text class="small" x="284.0" y="540" fill="#C44E52" font-style="italic">FDR cutoff</text>
+<text class="note" x="340.0" y="666"><tspan x="340.0" dy="0">largest weight below target FDR</tspan></text>
+<text class="caption" x="680.0" y="420"><tspan x="680.0" dy="0">Visualize</tspan><tspan x="680.0" dy="26">network</tspan></text>
+<rect class="box" x="550.0" y="470" width="260" height="210" rx="10"/>
+<line x1="630.0" y1="515.0" x2="589.5" y2="503.9" stroke="#999999" stroke-width="2" marker-end="url(#arrow-gray)"/>
+<line x1="630.0" y1="515.0" x2="581.5" y2="555.4" stroke="#999999" stroke-width="2" marker-end="url(#arrow-gray)"/>
+<line x1="630.0" y1="515.0" x2="666.1" y2="500.6" stroke="#999999" stroke-width="2" marker-end="url(#arrow-gray)"/>
+<line x1="630.0" y1="515.0" x2="664.9" y2="610.9" stroke="#999999" stroke-width="2" marker-end="url(#arrow-gray)"/>
+<line x1="735.0" y1="510.0" x2="770.3" y2="517.1" stroke="#999999" stroke-width="2" marker-end="url(#arrow-gray)"/>
+<line x1="735.0" y1="510.0" x2="694.5" y2="498.9" stroke="#999999" stroke-width="2" marker-end="url(#arrow-gray)"/>
+<line x1="735.0" y1="510.0" x2="780.7" y2="568.2" stroke="#999999" stroke-width="2" marker-end="url(#arrow-gray)"/>
+<line x1="715.0" y1="580.0" x2="619.1" y2="614.9" stroke="#999999" stroke-width="2" marker-end="url(#arrow-gray)"/>
+<line x1="715.0" y1="580.0" x2="680.6" y2="614.4" stroke="#999999" stroke-width="2" marker-end="url(#arrow-gray)"/>
+<line x1="715.0" y1="580.0" x2="737.8" y2="621.8" stroke="#999999" stroke-width="2" marker-end="url(#arrow-gray)"/>
+<line x1="715.0" y1="580.0" x2="775.0" y2="580.0" stroke="#999999" stroke-width="2" marker-end="url(#arrow-gray)"/>
+<line x1="630.0" y1="515.0" x2="720.0" y2="510.7" stroke="#4C72B0" stroke-width="3" marker-end="url(#arrow-blue)"/>
+<line x1="735.0" y1="510.0" x2="719.1" y2="565.6" stroke="#4C72B0" stroke-width="3" marker-end="url(#arrow-blue)"/>
+<line x1="715.0" y1="580.0" x2="641.9" y2="524.1" stroke="#4C72B0" stroke-width="3" marker-end="url(#arrow-blue)"/>
+<circle cx="575.0" cy="500" r="11" fill="#DD8452" stroke="#a8622f" stroke-width="1.5"/>
+<circle cx="570.0" cy="565" r="11" fill="#DD8452" stroke="#a8622f" stroke-width="1.5"/>
+<circle cx="605.0" cy="620" r="11" fill="#DD8452" stroke="#a8622f" stroke-width="1.5"/>
+<circle cx="670.0" cy="625" r="11" fill="#DD8452" stroke="#a8622f" stroke-width="1.5"/>
+<circle cx="745.0" cy="635" r="11" fill="#DD8452" stroke="#a8622f" stroke-width="1.5"/>
+<circle cx="790.0" cy="580" r="11" fill="#DD8452" stroke="#a8622f" stroke-width="1.5"/>
+<circle cx="785.0" cy="520" r="11" fill="#DD8452" stroke="#a8622f" stroke-width="1.5"/>
+<circle cx="680.0" cy="495" r="11" fill="#DD8452" stroke="#a8622f" stroke-width="1.5"/>
+<rect x="617.0" y="502" width="26" height="26" fill="#4C72B0" stroke="#2c4a75" stroke-width="1.5"/>
+<rect x="722.0" y="497" width="26" height="26" fill="#4C72B0" stroke="#2c4a75" stroke-width="1.5"/>
+<rect x="702.0" y="567" width="26" height="26" fill="#4C72B0" stroke="#2c4a75" stroke-width="1.5"/>
+<text class="note" x="680.0" y="666"><tspan x="680.0" dy="0">in-app or Cytoscape</tspan></text>
+<line x1="820.0" y1="575" x2="866.0" y2="575" stroke="#999999" stroke-width="4" stroke-dasharray="10,8" marker-end="url(#flow-gray)"/>
+<text class="caption" x="1020.0" y="420"><tspan x="1020.0" dy="0">Compute Network</tspan><tspan x="1020.0" dy="26">Motif Score (NMS)</tspan></text>
+<rect class="box-optional" x="890.0" y="470" width="260" height="210" rx="10"/>
+<line x1="950.0" y1="495.0" x2="915.8" y2="550.6" stroke="#999999" stroke-width="2" marker-end="url(#arrow-gray)"/>
+<line x1="950.0" y1="495.0" x2="984.2" y2="550.6" stroke="#999999" stroke-width="2" marker-end="url(#arrow-gray)"/>
+<line x1="910.0" y1="560.0" x2="979.0" y2="560.0" stroke="#999999" stroke-width="2" marker-end="url(#arrow-gray)"/>
+<circle cx="950.0" cy="495" r="9" fill="#cccccc" stroke="#999999" stroke-width="1.5"/>
+<circle cx="910.0" cy="560" r="9" fill="#cccccc" stroke="#999999" stroke-width="1.5"/>
+<circle cx="990.0" cy="560" r="9" fill="#cccccc" stroke="#999999" stroke-width="1.5"/>
+<line x1="1060.0" y1="505.0" x2="1114.4" y2="490.8" stroke="#999999" stroke-width="2" marker-end="url(#arrow-gray)"/>
+<line x1="1060.0" y1="505.0" x2="1117.6" y2="568.8" stroke="#999999" stroke-width="2" marker-end="url(#arrow-gray)"/>
+<line x1="1060.0" y1="560.0" x2="1117.6" y2="496.2" stroke="#999999" stroke-width="2" marker-end="url(#arrow-gray)"/>
+<line x1="1060.0" y1="560.0" x2="1114.4" y2="574.2" stroke="#999999" stroke-width="2" marker-end="url(#arrow-gray)"/>
+<circle cx="1060.0" cy="505" r="9" fill="#cccccc" stroke="#999999" stroke-width="1.5"/>
+<circle cx="1060.0" cy="560" r="9" fill="#cccccc" stroke="#999999" stroke-width="1.5"/>
+<circle cx="1125.0" cy="488" r="9" fill="#cccccc" stroke="#999999" stroke-width="1.5"/>
+<circle cx="1125.0" cy="577" r="9" fill="#cccccc" stroke="#999999" stroke-width="1.5"/>
+<text class="note" x="1020.0" y="618"><tspan x="1020.0" dy="0">optional -- done in Cytoscape</tspan><tspan x="1020.0" dy="18">(NetMatchStar + NMS.R),</tspan><tspan x="1020.0" dy="18">not part of the SCION app</tspan></text>
+<line x1="310" y1="195" x2="366" y2="195" stroke="#333333" stroke-width="4" marker-end="url(#flow-dark)"/>
+<line x1="650" y1="195" x2="706" y2="195" stroke="#333333" stroke-width="4" marker-end="url(#flow-dark)"/>
+<line x1="990" y1="195" x2="1046" y2="195" stroke="#333333" stroke-width="4" marker-end="url(#flow-dark)"/>
+<line x1="480.0" y1="575" x2="536.0" y2="575" stroke="#333333" stroke-width="4" marker-end="url(#flow-dark)"/>
+</svg>

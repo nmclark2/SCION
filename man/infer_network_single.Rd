@@ -10,7 +10,6 @@ infer_network_single(
   weightthreshold,
   normalize,
   num.cores,
-  engine,
   ...
 )
 }

@@ -11,9 +11,7 @@ compute_fdr_threshold(real_network, permuted_networks, target_fdr = 0.05)
 column), e.g. the \code{network} element of \code{\link[=run_scion]{run_scion()}}'s result.}
 
 \item{permuted_networks}{a list of permuted edge tables, as returned by
-\code{\link[=permute_network]{permute_network()}}. \strong{Must have been produced with the same \code{engine}} as
-\code{real_network} -- weights from different engines are not on comparable
-scales, which would invalidate this rank-matching.}
+\code{\link[=permute_network]{permute_network()}}, produced against the same \code{real_network}.}
 
 \item{target_fdr}{the FDR threshold to select a weight cutoff at (default 0.05).}
 }

@@ -4,10 +4,10 @@ test_that("permute_network is reproducible regardless of num.cores", {
 
   perms_1core <- permute_network(mats$target, mats$reg, n_permutations = 3, num.cores = 1,
                                   weightthreshold = 0, normalize = FALSE, connect_hubs = FALSE,
-                                  engine = "randomForest", nb.trees = 50, trace = FALSE)
+                                  nb.trees = 50, trace = FALSE)
   perms_3core <- permute_network(mats$target, mats$reg, n_permutations = 3, num.cores = 3,
                                   weightthreshold = 0, normalize = FALSE, connect_hubs = FALSE,
-                                  engine = "randomForest", nb.trees = 50, trace = FALSE)
+                                  nb.trees = 50, trace = FALSE)
 
   expect_identical(perms_1core, perms_3core)
 })
@@ -24,7 +24,7 @@ test_that("permute_network works with a clustered assignment that has singleton 
   expect_no_error(
     permute_network(mats$target, mats$reg, cluster_assignment = cluster_assignment,
                      n_permutations = 2, num.cores = 1, weightthreshold = 0, normalize = FALSE,
-                     connect_hubs = FALSE, engine = "randomForest", nb.trees = 30, trace = FALSE)
+                     connect_hubs = FALSE, nb.trees = 30, trace = FALSE)
   )
 })
 

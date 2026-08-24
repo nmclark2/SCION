@@ -17,7 +17,7 @@
 #' @param clustering_threshold passed to [cluster_genes()] as `threshold`.
 #' @param clusters_file passed to [cluster_genes()] as `clusters_file`, required
 #'   when `clustering_method = "upload"`.
-#' @param connect_hubs,num.cores,engine,ptm_sep passed to [infer_network()].
+#' @param connect_hubs,num.cores,ptm_sep passed to [infer_network()].
 #' @param weightthreshold passed to [infer_network()]. Forced to `0` (with a warning) whenever
 #'   `permute = TRUE`, regardless of what's passed -- the FDR comparison needs the full,
 #'   unthresholded network on both sides; apply a cutoff to the result afterward instead (see
@@ -32,7 +32,7 @@
 #' @param permute if `TRUE`, also run [permute_network()] and
 #'   [compute_fdr_threshold()] against the just-inferred network, in this same
 #'   call. Runs `n_permutations` permutations using the SAME `weightthreshold`,
-#'   `normalize`, `connect_hubs`, `engine`, `ptm_sep`, `num.cores`, and `...`
+#'   `normalize`, `connect_hubs`, `ptm_sep`, `num.cores`, and `...`
 #'   used for the real network above -- there is no separate way to set these
 #'   for the permutations, since the FDR calculation requires them to match.
 #'   For sharding permutations across an HPC job array instead of running them
@@ -67,13 +67,12 @@ run_scion <- function(target_data_file, reg_data_file, target_genes_file = NULL,
                        clustering_data_file = NULL, clustering_threshold = 0.5,
                        clusters_file = NULL, connect_hubs = TRUE, weightthreshold = 0,
                        normalize = TRUE, num.cores = 1,
-                       engine = c("randomForest", "ranger"), ptm_sep = ".", seed = 2020,
+                       ptm_sep = ".", seed = 2020,
                        permute = FALSE, n_permutations = 100,
                        permute_dim = c("col", "row"), base_seed = 0, target_fdr = 0.05,
                        output_file = NULL, ...) {
   format <- match.arg(format)
   clustering_method <- match.arg(clustering_method)
-  engine <- match.arg(engine)
   permute_dim <- match.arg(permute_dim)
 
   if (permute && isTRUE(normalize)) {
@@ -109,7 +108,7 @@ run_scion <- function(target_data_file, reg_data_file, target_genes_file = NULL,
   message("SCION_STAGE: network inference started")
   network <- infer_network(inputs$target, inputs$reg, cluster_assignment = cluster_assignment,
                             weightthreshold = weightthreshold, normalize = normalize,
-                            connect_hubs = connect_hubs, num.cores = num.cores, engine = engine,
+                            connect_hubs = connect_hubs, num.cores = num.cores,
                             ptm_sep = ptm_sep, ...)
   message("SCION_STAGE: network inference complete")
 
@@ -117,7 +116,7 @@ run_scion <- function(target_data_file, reg_data_file, target_genes_file = NULL,
                   cluster_assignment = cluster_assignment,
                   params = list(weightthreshold = weightthreshold, normalize = normalize,
                                  connect_hubs = connect_hubs, num.cores = num.cores,
-                                 engine = engine, ptm_sep = ptm_sep, seed = seed))
+                                 ptm_sep = ptm_sep, seed = seed))
 
   if (permute) {
     permuted_networks <- permute_network(inputs$target, inputs$reg,
@@ -126,7 +125,7 @@ run_scion <- function(target_data_file, reg_data_file, target_genes_file = NULL,
                                           permute_dim = permute_dim, base_seed = base_seed,
                                           num.cores = num.cores,
                                           weightthreshold = weightthreshold, normalize = normalize,
-                                          connect_hubs = connect_hubs, engine = engine,
+                                          connect_hubs = connect_hubs,
                                           ptm_sep = ptm_sep, ...)
     fdr_result <- compute_fdr_threshold(network, permuted_networks, target_fdr = target_fdr)
 

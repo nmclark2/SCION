@@ -3,10 +3,10 @@ test_that("infer_network (no clustering) is invariant to num.cores given the sam
   mats <- make_test_matrices()
 
   net_1core <- infer_network(mats$target, mats$reg, weightthreshold = 0, normalize = FALSE,
-                              num.cores = 1, engine = "randomForest", nb.trees = 50, trace = FALSE,
+                              num.cores = 1, nb.trees = 50, trace = FALSE,
                               seed = 123)
   net_3core <- infer_network(mats$target, mats$reg, weightthreshold = 0, normalize = FALSE,
-                              num.cores = 3, engine = "randomForest", nb.trees = 50, trace = FALSE,
+                              num.cores = 3, nb.trees = 50, trace = FALSE,
                               seed = 123)
 
   expect_equal(net_1core, net_3core)
@@ -23,11 +23,11 @@ test_that("infer_network with MULTIPLE clusters is invariant to num.cores given 
 
   net_1core <- infer_network(mats$target, mats$reg, cluster_assignment = cluster_assignment,
                               weightthreshold = 0, normalize = FALSE, connect_hubs = FALSE,
-                              num.cores = 1, engine = "randomForest", nb.trees = 50, trace = FALSE,
+                              num.cores = 1, nb.trees = 50, trace = FALSE,
                               seed = 123)
   net_3core <- infer_network(mats$target, mats$reg, cluster_assignment = cluster_assignment,
                               weightthreshold = 0, normalize = FALSE, connect_hubs = FALSE,
-                              num.cores = 3, engine = "randomForest", nb.trees = 50, trace = FALSE,
+                              num.cores = 3, nb.trees = 50, trace = FALSE,
                               seed = 123)
 
   expect_equal(net_1core, net_3core)
@@ -49,7 +49,7 @@ test_that("infer_network skips clusters with exactly one regulator (NA %IncMSE) 
   expect_no_warning(
     net <- infer_network(mats$target, mats$reg, cluster_assignment = cluster_assignment,
                           weightthreshold = 0, normalize = TRUE, connect_hubs = FALSE,
-                          num.cores = 1, engine = "randomForest", nb.trees = 20, trace = FALSE,
+                          num.cores = 1, nb.trees = 20, trace = FALSE,
                           seed = 123)
   )
   cluster1_targets <- rownames(mats$target)[1:4]

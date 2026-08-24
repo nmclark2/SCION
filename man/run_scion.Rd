@@ -19,7 +19,6 @@ run_scion(
   weightthreshold = 0,
   normalize = TRUE,
   num.cores = 1,
-  engine = c("randomForest", "ranger"),
   ptm_sep = ".",
   seed = 2020,
   permute = FALSE,
@@ -45,8 +44,17 @@ run_scion(
 \item{clusters_file}{passed to \code{\link[=cluster_genes]{cluster_genes()}} as \code{clusters_file}, required
 when \code{clustering_method = "upload"}.}
 
-\item{connect_hubs, weightthreshold, normalize, num.cores, engine, ptm_sep}{passed
-to \code{\link[=infer_network]{infer_network()}}.}
+\item{connect_hubs, num.cores, ptm_sep}{passed to \code{\link[=infer_network]{infer_network()}}.}
+
+\item{weightthreshold}{passed to \code{\link[=infer_network]{infer_network()}}. Forced to \code{0} (with a warning) whenever
+\code{permute = TRUE}, regardless of what's passed -- the FDR comparison needs the full,
+unthresholded network on both sides; apply a cutoff to the result afterward instead (see
+\code{\link[=compute_fdr_threshold]{compute_fdr_threshold()}}).}
+
+\item{normalize}{passed to \code{\link[=infer_network]{infer_network()}}. Forced to \code{FALSE} (with a warning) whenever
+\code{permute = TRUE}, regardless of what's passed -- normalizing rescales each network (real
+and every permutation) independently to \verb{[0, 1]}, which would force every permutation's
+top edge weight to exactly 1 and invalidate the rank-based FDR comparison.}
 
 \item{seed}{RNG seed set once, before clustering and inference, so the same
 inputs produce the same network every run. Default matches the legacy
@@ -55,7 +63,7 @@ inputs produce the same network every run. Default matches the legacy
 \item{permute}{if \code{TRUE}, also run \code{\link[=permute_network]{permute_network()}} and
 \code{\link[=compute_fdr_threshold]{compute_fdr_threshold()}} against the just-inferred network, in this same
 call. Runs \code{n_permutations} permutations using the SAME \code{weightthreshold},
-\code{normalize}, \code{connect_hubs}, \code{engine}, \code{ptm_sep}, \code{num.cores}, and \code{...}
+\code{normalize}, \code{connect_hubs}, \code{ptm_sep}, \code{num.cores}, and \code{...}
 used for the real network above -- there is no separate way to set these
 for the permutations, since the FDR calculation requires them to match.
 For sharding permutations across an HPC job array instead of running them
@@ -70,7 +78,11 @@ when \code{permute = TRUE}.}
 
 \item{output_file}{optional path to write the final edge table to (tab-
 separated, Cytoscape-importable). \code{NULL} (default) writes nothing. When
-\code{permute = TRUE}, writes the FDR-thresholded network, not the raw one.}
+\code{permute = TRUE}, writes the FDR-thresholded network, not the raw one.
+Also triggers \code{\link[=save_diagnostic_plots]{save_diagnostic_plots()}}, saved alongside it (same
+directory, named from \code{output_file}'s base name) -- there's no Shiny app
+to view/download them from interactively in this CLI/scripted path, so
+they're written automatically instead of requiring a separate call.}
 
 \item{...}{additional arguments passed to \code{\link[=infer_network]{infer_network()}} /
 \code{\link[=RS.Get.Weight.Matrix]{RS.Get.Weight.Matrix()}} (and, when \code{permute = TRUE}, to the internal

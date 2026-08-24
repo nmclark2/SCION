@@ -63,9 +63,6 @@ shuffle_matrix <- function(mat, dim = c("col", "row")) {
 #'   `[0, 1]`, forcing every permutation's top edge weight to exactly 1 regardless of its
 #'   actual signal, which invalidates the rank-based FDR comparison (see [run_scion()], which
 #'   enforces this automatically when calling this function with `permute = TRUE`).
-#' @param engine passed to [infer_network()]. **Must be the same engine used to
-#'   produce `target`/`reg`'s real network** -- see [RS.Get.Weight.Matrix()] and
-#'   [compute_fdr_threshold()].
 #' @param ... additional arguments passed to [infer_network()].
 #' @return a list the same length as `indices`, each element an edge table as
 #'   returned by [infer_network()], named by its permutation index (as a string).
@@ -83,10 +80,8 @@ shuffle_matrix <- function(mat, dim = c("col", "row")) {
 permute_network <- function(target, reg, cluster_assignment = NULL, n_permutations = 100,
                              indices = seq_len(n_permutations), permute_dim = c("col", "row"),
                              base_seed = 0, num.cores = 1, weightthreshold = 0, normalize = TRUE,
-                             connect_hubs = TRUE, engine = c("randomForest", "ranger"),
-                             ptm_sep = ".", ...) {
+                             connect_hubs = TRUE, ptm_sep = ".", ...) {
   permute_dim <- match.arg(permute_dim)
-  engine <- match.arg(engine)
 
   outer_parallel <- num.cores > 2
   inner_num_cores <- if (outer_parallel) 1 else num.cores
@@ -100,7 +95,7 @@ permute_network <- function(target, reg, cluster_assignment = NULL, n_permutatio
     shuffled_reg <- shuffle_matrix(reg, permute_dim)
     infer_network(shuffled_target, shuffled_reg, cluster_assignment = cluster_assignment,
                    weightthreshold = weightthreshold, normalize = normalize,
-                   connect_hubs = connect_hubs, num.cores = inner_num_cores, engine = engine,
+                   connect_hubs = connect_hubs, num.cores = inner_num_cores,
                    ptm_sep = ptm_sep, ...)
   }
 

@@ -7,7 +7,11 @@
 plot_fdr_curve(
   fdr_result,
   type = c("curve", "fdr_hist", "weight_comparison"),
-  permutation_index = 1
+  permutation_index = 1,
+  title = NULL,
+  threshold = fdr_result$threshold,
+  show_target_fdr_line = TRUE,
+  label_lines = FALSE
 )
 }
 \arguments{
@@ -21,6 +25,26 @@ overlay).}
 \item{permutation_index}{which permuted network's weights to show for
 \code{type = "weight_comparison"} (default 1; matches \code{permuted_networks[[1]]}
 used to build \code{fdr_result}).}
+
+\item{title}{optional plot title -- see \code{\link[=plot_weight_distribution]{plot_weight_distribution()}}'s \code{title} argument.}
+
+\item{threshold}{the edge-weight cutoff to mark on \code{type = "curve"} (a
+dashed vertical line, labeled with its value) -- defaults to
+\code{fdr_result$threshold}, but the caller can pass a different value (e.g. a
+manual cutoff that overrides the FDR-based one) so the marked line always
+reflects whichever cutoff is actually in effect. \code{NULL}/\code{NA} draws no line.}
+
+\item{show_target_fdr_line}{if \code{TRUE} (default), also draws a dashed
+horizontal line at \code{fdr_result$target_fdr}. Set \code{FALSE} when \code{threshold}
+is a manual override, since the FDR target is no longer the criterion
+that produced it and showing it would be misleading.}
+
+\item{label_lines}{if \code{FALSE} (default), the threshold/target-FDR lines
+carry their value as plotly hover text only (via \code{\link[plotly:ggplotly]{plotly::ggplotly()}}) --
+appropriate for the interactive app, where hovering is how you'd read a
+value off any other point on the plot too. If \code{TRUE}, also draws the
+value as permanent on-plot text, for contexts with no hover available
+(the static PDF export).}
 }
 \value{
 a \code{ggplot2} object.

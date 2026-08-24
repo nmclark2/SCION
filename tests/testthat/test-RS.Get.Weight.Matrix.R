@@ -15,7 +15,7 @@ test_that("RS.Get.Weight.Matrix returns NULL (no warning) when every importance 
   reg <- data.frame(r1 = c(1, 1, 2), r2 = c(2, 1, 1))
 
   expect_no_warning(
-    net <- RS.Get.Weight.Matrix(target, reg, num.cores = 1, engine = "randomForest",
+    net <- RS.Get.Weight.Matrix(target, reg, num.cores = 1, 
                                  normalize = TRUE, trace = FALSE)
   )
   expect_null(net)

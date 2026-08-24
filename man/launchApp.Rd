@@ -14,7 +14,7 @@ a \code{shiny.appobj}, as returned by \code{shiny::shinyApp()}.
 }
 \description{
 A 3-tab app covering the full run -> permute/FDR -> visualize workflow.
-Requires \code{shiny}, \code{shinydashboard}, \code{shinydashboardPlus}, and \code{shinyjs},
-which are \code{Suggests} (not hard dependencies) so that scripted/HPC use of
-the package doesn't require the Shiny stack to be installed.
+Requires \code{shiny}, \code{shinydashboard}, \code{shinydashboardPlus}, \code{shinyjs}, and
+\code{plotly}, which are \code{Suggests} (not hard dependencies) so that scripted/HPC
+use of the package doesn't require the Shiny stack to be installed.
 }

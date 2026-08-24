@@ -26,8 +26,13 @@ test_that("plot_network(interactive = TRUE) groups nodes by Regulator/Target wit
   expect_equal(nodes$group[nodes$id == "t1"], "Target")
   expect_equal(nodes$group[nodes$id == "t2"], "Target")
   expect_true(all(!is.na(nodes$label)))
-  expect_true(isTRUE(vis$x$legend$useGroups))
-  expect_match(vis$x$submain$text, "weight", ignore.case = TRUE)
+  # a plain static HTML/CSS legend, not visNetwork::visLegend() -- that
+  # renders its own independently zoomable vis.js canvas, which reads as a
+  # comically oversized, pointlessly interactive legend at normal widget sizes
+  legend_html <- as.character(htmltools::doRenderTags(vis$prepend[[1]]))
+  expect_match(legend_html, "Regulator")
+  expect_match(legend_html, "Target")
+  expect_match(legend_html, "weight", ignore.case = TRUE)
   expect_true(isTRUE(vis$x$options$interaction$navigationButtons))
 })
 

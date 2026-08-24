@@ -12,7 +12,6 @@ infer_network(
   normalize = TRUE,
   connect_hubs = TRUE,
   num.cores = 1,
-  engine = c("randomForest", "ranger"),
   ptm_sep = ".",
   seed = NULL,
   ...
@@ -35,10 +34,6 @@ single network across all genes.}
 connecting each cluster's hub gene (highest out-degree regulator).}
 
 \item{num.cores}{passed to \code{\link[=RS.Get.Weight.Matrix]{RS.Get.Weight.Matrix()}}.}
-
-\item{engine}{passed to \code{\link[=RS.Get.Weight.Matrix]{RS.Get.Weight.Matrix()}}. Must match whatever engine
-produced any network this one will be compared against (see
-\code{\link[=RS.Get.Weight.Matrix]{RS.Get.Weight.Matrix()}} and \code{\link[=compute_fdr_threshold]{compute_fdr_threshold()}}).}
 
 \item{ptm_sep}{separator used to split a PTM-site regulator name into gene
 symbol + site (e.g. \code{"."} for \code{SOX2.S35}, \code{"_"} for \code{MEF2C_S453s}): when

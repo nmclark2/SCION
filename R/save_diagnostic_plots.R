@@ -28,11 +28,18 @@ save_diagnostic_plots <- function(result, dir, prefix = "diagnostics",
     paths[[length(paths) + 1]] <<- path
   }
 
-  save_one(plot_weight_distribution(result$network, cutoff = cutoff), "weight_distribution")
-  save_one(plot_outdegree_distribution(result$network), "outdegree_distribution")
+  # label_line(s) = TRUE -- a static PDF has no hover, so the cutoff/target-FDR
+  # lines need their value written on the plot rather than left to a tooltip.
+  save_one(plot_weight_distribution(result$network, cutoff = cutoff, title = "Edge weight distribution",
+                                     label_line = TRUE),
+           "weight_distribution")
+  save_one(plot_outdegree_distribution(result$network, title = "Regulator out-degree distribution"),
+           "outdegree_distribution")
   if (!is.null(result$fdr_result)) {
-    save_one(plot_fdr_curve(result$fdr_result, type = "curve"), "fdr_curve")
-    save_one(plot_fdr_curve(result$fdr_result, type = "weight_comparison"), "weight_comparison")
+    save_one(plot_fdr_curve(result$fdr_result, type = "curve", title = "FDR curve", label_lines = TRUE),
+             "fdr_curve")
+    save_one(plot_fdr_curve(result$fdr_result, type = "weight_comparison",
+                             title = "Real vs. permuted weight distribution"), "weight_comparison")
   }
 
   invisible(paths)

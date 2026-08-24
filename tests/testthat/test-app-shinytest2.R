@@ -28,7 +28,6 @@ test_that("Shiny app: running a network shows weight/outdegree diagnostics (no p
   app$wait_for_idle(timeout = 60000)
 
   status_html <- app$get_html("#run-status")
-  expect_match(status_html, "edges")
   expect_match(status_html, "Download full network")
 
   # a completed run should auto-navigate away from the default Help tab
@@ -83,12 +82,12 @@ test_that("Shiny app: sidebar's 'Run permutations' checkbox populates the Networ
   app$click("run-run")
   app$wait_for_idle(timeout = 60000)
 
-  # the sidebar itself should report the FDR threshold
+  # the sidebar itself just offers the download; edge/cluster/FDR counts are
+  # the Network Diagnostics tab's job (auto-navigated to on completion), not
+  # repeated here
   run_status_html <- app$get_html("#run-status")
-  expect_match(run_status_html, "FDR threshold")
+  expect_match(run_status_html, "Download full network")
 
-  # ... and the Network Diagnostics tab (auto-navigated to) should show it too,
-  # with no click on any of its own controls needed -- it no longer has any
   summary_html <- app$get_html("#diagnostics-summary")
   expect_match(summary_html, "Threshold")
 })
@@ -169,7 +168,7 @@ test_that("Shiny app: 'Load example data' + 'Run network' runs the bundled Arabi
   app$wait_for_idle(timeout = 180000)
 
   status_html <- app$get_html("#run-status")
-  expect_match(status_html, "edges")
+  expect_match(status_html, "Download full network")
   expect_equal(app$get_value(input = "navbar-tabs"), "diagnostics")
   expect_match(app$get_html("#diagnostics-weight_distribution"), "plotly")
 })

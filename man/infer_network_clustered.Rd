@@ -12,7 +12,6 @@ infer_network_clustered(
   normalize,
   connect_hubs,
   num.cores,
-  engine,
   ptm_sep,
   ...
 )

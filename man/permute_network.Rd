@@ -16,7 +16,6 @@ permute_network(
   weightthreshold = 0,
   normalize = TRUE,
   connect_hubs = TRUE,
-  engine = c("randomForest", "ranger"),
   ptm_sep = ".",
   ...
 )
@@ -52,11 +51,21 @@ this process or, for a single index, as whatever single HPC job called
 this) and their own \code{num.cores} is passed straight through to each
 \code{\link[=infer_network]{infer_network()}} call.}
 
-\item{weightthreshold, normalize, connect_hubs, ptm_sep}{passed to \code{\link[=infer_network]{infer_network()}}.}
+\item{weightthreshold}{passed to \code{\link[=infer_network]{infer_network()}}. \strong{Must match whatever was used for the
+real network} (see \code{normalize} below), and should generally be \code{0}: the FDR comparison in
+\code{\link[=compute_fdr_threshold]{compute_fdr_threshold()}} needs the full, unthresholded network on both sides -- a nonzero
+value applies the same manual cutoff before that comparison ever happens, biasing which
+edges get compared (see \code{\link[=run_scion]{run_scion()}}, which enforces this automatically when calling this
+function with \code{permute = TRUE}).}
 
-\item{engine}{passed to \code{\link[=infer_network]{infer_network()}}. \strong{Must be the same engine used to
-produce \code{target}/\code{reg}'s real network} -- see \code{\link[=RS.Get.Weight.Matrix]{RS.Get.Weight.Matrix()}} and
-\code{\link[=compute_fdr_threshold]{compute_fdr_threshold()}}.}
+\item{normalize}{passed to \code{\link[=infer_network]{infer_network()}}. \strong{Must match whatever was used for the real
+network} this permutation set will be compared against in \code{\link[=compute_fdr_threshold]{compute_fdr_threshold()}}, and
+should generally be \code{FALSE} for both: normalizing rescales each network independently to
+\verb{[0, 1]}, forcing every permutation's top edge weight to exactly 1 regardless of its
+actual signal, which invalidates the rank-based FDR comparison (see \code{\link[=run_scion]{run_scion()}}, which
+enforces this automatically when calling this function with \code{permute = TRUE}).}
+
+\item{connect_hubs, ptm_sep}{passed to \code{\link[=infer_network]{infer_network()}}.}
 
 \item{...}{additional arguments passed to \code{\link[=infer_network]{infer_network()}}.}
 }
@@ -71,4 +80,15 @@ recomputed per permutation -- see \code{\link[=cluster_genes]{cluster_genes()}})
 lab procedure (\code{scion_data_processing.R}): each permutation \code{i} is seeded with
 \code{base_seed + i} before shuffling, which makes results independent of \code{num.cores}
 for the same reason the per-target-gene seeding in \code{\link[=RS.Get.Weight.Matrix]{RS.Get.Weight.Matrix()}} does.
+}
+\details{
+Emits a \code{"SCION_STAGE: permutation testing progress <done>/<total>"} message
+after every completed permutation (serial path) or every completed batch of
+\code{num.cores - 1} permutations (parallel path -- a single \code{parLapply()} call
+blocks until it returns, so there's no way to observe progress \emph{within} one
+call; splitting the work into per-worker-sized batches trades a little
+dispatch overhead for a progress update roughly every \code{num.cores - 1}
+permutations). The Shiny app's Run tab listens for these to drive its
+progress bar smoothly across the whole permutation phase instead of sitting
+still until it's all done.
 }

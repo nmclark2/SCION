@@ -37,13 +37,13 @@ pick_hub_genes <- function(edge_table) {
 #' Infer a single (non-clustered) network
 #' @keywords internal
 infer_network_single <- function(target_data, reg_data, weightthreshold, normalize,
-                                  num.cores, engine, ...) {
+                                  num.cores, ...) {
   if (dim(target_data)[1] < 1 || dim(reg_data)[1] < 1) {
     message("Need at least one target and at least one regulator to infer a network. SCION will not run")
     return(NULL)
   }
   network <- RS.Get.Weight.Matrix(t(target_data), t(reg_data), normalize = normalize,
-                                  num.cores = num.cores, engine = engine, ...)
+                                  num.cores = num.cores, ...)
   if (is.null(network)) {
     return(NULL)
   }
@@ -53,7 +53,7 @@ infer_network_single <- function(target_data, reg_data, weightthreshold, normali
 #' Infer one network per cluster, optionally connecting cluster hubs
 #' @keywords internal
 infer_network_clustered <- function(target_data, reg_data, cluster_assignment, weightthreshold,
-                                      normalize, connect_hubs, num.cores, engine, ptm_sep, ...) {
+                                      normalize, connect_hubs, num.cores, ptm_sep, ...) {
   finalnetwork <- data.frame(Regulator = character(), Interaction = character(),
                               Target = character(), Weight = double(), stringsAsFactors = FALSE)
   myhubs <- character(0)
@@ -92,7 +92,7 @@ infer_network_clustered <- function(target_data, reg_data, cluster_assignment, w
     }
 
     network <- RS.Get.Weight.Matrix(t(clustertargetdata), t(clusterregdata), normalize = normalize,
-                                     num.cores = num.cores, engine = engine, seed = cluster_seeds[i], ...)
+                                     num.cores = num.cores, seed = cluster_seeds[i], ...)
     if (is.null(network)) {
       next
     }
@@ -104,7 +104,7 @@ infer_network_clustered <- function(target_data, reg_data, cluster_assignment, w
 
   if (connect_hubs && length(myhubs) > 2) {
     hub_network <- infer_hub_network(target_data, reg_data, myhubs, weightthreshold, normalize,
-                                      num.cores, engine, ptm_sep, cluster_seeds[n_clusters + 1], ...)
+                                      num.cores, ptm_sep, cluster_seeds[n_clusters + 1], ...)
     finalnetwork <- rbind(finalnetwork, hub_network)
   }
 
@@ -114,7 +114,7 @@ infer_network_clustered <- function(target_data, reg_data, cluster_assignment, w
 #' Infer the network connecting cluster hub genes
 #' @keywords internal
 infer_hub_network <- function(target_data, reg_data, myhubs, weightthreshold, normalize,
-                               num.cores, engine, ptm_sep, seed, ...) {
+                               num.cores, ptm_sep, seed, ...) {
   hubtargetdata <- target_data[row.names(target_data) %in% myhubs, , drop = FALSE]
   hubregdata <- reg_data[row.names(reg_data) %in% myhubs, , drop = FALSE]
   if (dim(hubtargetdata)[1] == 0) {
@@ -127,7 +127,7 @@ infer_hub_network <- function(target_data, reg_data, myhubs, weightthreshold, no
     return(NULL)
   }
   network <- RS.Get.Weight.Matrix(t(hubtargetdata), t(hubregdata), normalize = normalize,
-                                   num.cores = num.cores, engine = engine, seed = seed, ...)
+                                   num.cores = num.cores, seed = seed, ...)
   if (is.null(network)) {
     return(NULL)
   }
@@ -154,9 +154,6 @@ infer_hub_network <- function(target_data, reg_data, myhubs, weightthreshold, no
 #' @param connect_hubs if clustering, whether to additionally infer a network
 #'   connecting each cluster's hub gene (highest out-degree regulator).
 #' @param num.cores passed to [RS.Get.Weight.Matrix()].
-#' @param engine passed to [RS.Get.Weight.Matrix()]. Must match whatever engine
-#'   produced any network this one will be compared against (see
-#'   [RS.Get.Weight.Matrix()] and [compute_fdr_threshold()]).
 #' @param ptm_sep separator used to split a PTM-site regulator name into gene
 #'   symbol + site (e.g. `"."` for `SOX2.S35`, `"_"` for `MEF2C_S453s`): when
 #'   connecting cluster hubs and no hub gene is directly present in
@@ -174,17 +171,15 @@ infer_hub_network <- function(target_data, reg_data, myhubs, weightthreshold, no
 #' @export
 infer_network <- function(target_data, reg_data, cluster_assignment = NULL,
                            weightthreshold = 0, normalize = TRUE, connect_hubs = TRUE,
-                           num.cores = 1, engine = c("randomForest", "ranger"), ptm_sep = ".",
-                           seed = NULL, ...) {
-  engine <- match.arg(engine)
+                           num.cores = 1, ptm_sep = ".", seed = NULL, ...) {
   if (!is.null(seed)) {
     set.seed(seed)
   }
   result <- if (is.null(cluster_assignment)) {
-    infer_network_single(target_data, reg_data, weightthreshold, normalize, num.cores, engine, ...)
+    infer_network_single(target_data, reg_data, weightthreshold, normalize, num.cores, ...)
   } else {
     infer_network_clustered(target_data, reg_data, cluster_assignment, weightthreshold, normalize,
-                             connect_hubs, num.cores, engine, ptm_sep, ...)
+                             connect_hubs, num.cores, ptm_sep, ...)
   }
   split_ptm_sites(result, ptm_sep)
 }

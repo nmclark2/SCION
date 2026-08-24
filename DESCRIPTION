@@ -1,6 +1,6 @@
 Package: SCION
 Title: Spatiotemporal Clustering and Inference of Omics Networks
-Version: 5.0.0
+Version: 5.0
 Authors@R:
     person("Natalie", "Clark", , "nclark@broadinstitute.org", role = c("aut", "cre"))
 Description: Infers gene regulatory / omics networks from multi-omics data using
@@ -29,8 +29,9 @@ Imports:
     utils
 Suggests:
     cmapR,
+    htmltools,
+    htmlwidgets,
     plotly,
-    ranger,
     shiny,
     shinydashboard,
     shinydashboardPlus,

@@ -11,7 +11,6 @@ infer_hub_network(
   weightthreshold,
   normalize,
   num.cores,
-  engine,
   ptm_sep,
   seed,
   ...

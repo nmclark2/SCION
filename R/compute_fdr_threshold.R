@@ -16,9 +16,7 @@ prep_weights_for_fdr <- function(weights) {
 #' @param real_network the real network's edge table (must have a `Weight`
 #'   column), e.g. the `network` element of [run_scion()]'s result.
 #' @param permuted_networks a list of permuted edge tables, as returned by
-#'   [permute_network()]. **Must have been produced with the same `engine`** as
-#'   `real_network` -- weights from different engines are not on comparable
-#'   scales, which would invalidate this rank-matching.
+#'   [permute_network()], produced against the same `real_network`.
 #' @param target_fdr the FDR threshold to select a weight cutoff at (default 0.05).
 #' @return a list:
 #'   \item{curve}{a data frame with one row per ranked real-network weight:

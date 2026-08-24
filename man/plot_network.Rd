@@ -13,19 +13,22 @@ plot_network(edge_table, interactive = FALSE, ...)
 
 \item{interactive}{if \code{FALSE} (default), plots via base \code{igraph} plotting
 (static). If \code{TRUE}, returns an interactive \code{visNetwork} HTML widget
-(requires the optional \code{visNetwork} package).}
+(requires the optional \code{visNetwork} package) with on-canvas zoom/pan
+controls.}
 
 \item{...}{additional arguments passed to \code{igraph::plot.igraph()} (static)
 or \code{visNetwork::visNetwork()} (interactive).}
 }
 \value{
 for \code{interactive = FALSE}, invisibly returns the \code{igraph} object
-(after plotting it as a side effect); for \code{interactive = TRUE}, a
-\code{visNetwork} htmlwidget.
+(after plotting it, with a legend, as a side effect); for
+\code{interactive = TRUE}, a \code{visNetwork} htmlwidget.
 }
 \description{
 A quick in-R sanity-check visualization -- for anything beyond a few dozen
 nodes, or for a publication-quality figure, importing the edge table into
 Cytoscape (see \code{\link[=write_scion_network]{write_scion_network()}}) will still give better layout
-control.
+control. Both the static and interactive versions use the same visual
+encoding: regulators are blue squares, targets are orange circles, and edge
+width is proportional to weight.
 }
