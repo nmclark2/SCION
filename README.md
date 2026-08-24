@@ -45,7 +45,8 @@ result <- run_scion(
 ```
 
 See `?run_scion` for all options, including clustering, permutation-based FDR, and PTM-aware
-regulator names.
+regulator names, or [SCION.pdf](SCION.pdf) for a complete reference manual of every function
+(regenerated automatically whenever the code changes).
 
 # Tutorials
 
